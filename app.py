@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from pathlib import Path
 
 import gspread
 import pandas as pd
@@ -18,6 +18,7 @@ st.set_page_config(
 
 SHEET_ID = "1cQU5tNwSoiepTPHx_Qc7ZF1PcaER2gstW_dZQ0eCrB4"
 WORKSHEET_NAME = "Página1"
+LOGO_PATH = "logo_oppi.png"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -35,23 +36,24 @@ st.markdown("""
 
     .block-container {
         max-width: 1450px;
-        padding-top: 1.2rem;
+        padding-top: 2.4rem !important;
         padding-bottom: 2rem;
     }
 
     .main-title {
         text-align: center;
-        font-size: 2.5rem;
+        font-size: 2.6rem;
         font-weight: 800;
-        color: #172554;
-        margin-bottom: 0.25rem;
+        color: #14213d;
+        margin-bottom: 0.2rem;
+        line-height: 1.1;
     }
 
     .main-subtitle {
         text-align: center;
         font-size: 1.08rem;
         color: #667085;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.6rem;
     }
 
     .top-divider, .section-divider {
@@ -60,7 +62,14 @@ st.markdown("""
         background: #ffffff;
         border: 1px solid #ececf3;
         border-radius: 999px;
-        margin: 0.7rem 0 1.3rem 0;
+        margin: 0.8rem 0 1.35rem 0;
+    }
+
+    .filter-label {
+        font-size: 0.94rem;
+        color: #2f3552;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
     }
 
     .kpi-card {
@@ -68,9 +77,9 @@ st.markdown("""
         border: 1px solid #ececf3;
         border-left: 6px solid #e91e63;
         border-radius: 22px;
-        padding: 1rem 1.1rem;
+        padding: 1.05rem 1.15rem 0.95rem 1.15rem;
         box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
-        min-height: 145px;
+        min-height: 150px;
     }
 
     .kpi-card.roxo { border-left-color: #7c3aed; }
@@ -83,7 +92,7 @@ st.markdown("""
         font-size: 1rem;
         font-weight: 700;
         color: #28314f;
-        margin-bottom: 0.85rem;
+        margin-bottom: 0.8rem;
     }
 
     .kpi-value {
@@ -91,7 +100,7 @@ st.markdown("""
         font-weight: 800;
         color: #081b4b;
         line-height: 1.05;
-        margin-bottom: 0.7rem;
+        margin-bottom: 0.72rem;
     }
 
     .kpi-caption {
@@ -100,7 +109,7 @@ st.markdown("""
     }
 
     .section-title {
-        font-size: 1.35rem;
+        font-size: 1.38rem;
         font-weight: 800;
         color: #14213d;
         margin-bottom: 0.3rem;
@@ -131,7 +140,7 @@ st.markdown("""
     .item-meta {
         color: #64748b;
         font-size: 0.96rem;
-        line-height: 1.6;
+        line-height: 1.65;
     }
 
     .item-meta b {
@@ -145,7 +154,7 @@ st.markdown("""
     }
 
     .item-value {
-        font-size: 1.3rem;
+        font-size: 1.28rem;
         font-weight: 800;
         color: #081b4b;
     }
@@ -224,8 +233,9 @@ def slug_coluna(col):
 def encontrar_coluna(df, candidatos):
     mapa = {slug_coluna(c): c for c in df.columns}
     for cand in candidatos:
-        if slug_coluna(cand) in mapa:
-            return mapa[slug_coluna(cand)]
+        slug = slug_coluna(cand)
+        if slug in mapa:
+            return mapa[slug]
     return None
 
 def parse_brl(valor):
@@ -234,9 +244,11 @@ def parse_brl(valor):
     s = str(valor).strip()
     if not s:
         return 0.0
+
     s = s.replace("R$", "").replace("r$", "").strip()
     s = s.replace(".", "").replace(",", ".")
     s = re.sub(r"[^0-9.\-]", "", s)
+
     try:
         return float(s)
     except Exception:
@@ -321,15 +333,6 @@ def carregar():
     col_detalhes = encontrar_coluna(df, ["Detalhes", "Descrição", "Descricao", "Observação", "Observacao"])
     col_whatsapp = encontrar_coluna(df, ["Whatsapp", "WhatsApp", "Telefone"])
 
-    df["_col_mes"] = col_mes or ""
-    df["_col_estabelecimento"] = col_estabelecimento or ""
-    df["_col_valor"] = col_valor or ""
-    df["_col_entrada"] = col_entrada or ""
-    df["_col_categoria"] = col_categoria or ""
-    df["_col_status"] = col_status or ""
-    df["_col_detalhes"] = col_detalhes or ""
-    df["_col_whatsapp"] = col_whatsapp or ""
-
     df["_mes_raw"] = df[col_mes] if col_mes else ""
     df["_data_mes"] = df["_mes_raw"].apply(parse_data_br) if col_mes else pd.NaT
     df["_mes_label"] = df["_data_mes"].apply(extrair_mes_label) if col_mes else "Sem data"
@@ -370,8 +373,17 @@ def atualizar_status(sheet_row, novo_status):
 # =========================================================
 # HEADER
 # =========================================================
+logo_file = Path(LOGO_PATH)
+if logo_file.exists():
+    l1, l2, l3 = st.columns([1.6, 1, 1.6])
+    with l2:
+        st.image(str(logo_file), use_container_width=True)
+
 st.markdown('<div class="main-title">Despesas & Gastos OPPI</div>', unsafe_allow_html=True)
-st.markdown('<div class="main-subtitle">Gestão financeira de receitas, despesas e status de pagamento</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="main-subtitle">Gestão financeira de receitas, despesas e status de pagamento</div>',
+    unsafe_allow_html=True
+)
 st.markdown('<div class="top-divider"></div>', unsafe_allow_html=True)
 
 # =========================================================
@@ -406,16 +418,20 @@ entrada_opcoes = ["Todas"] + sorted([x for x in df["_entrada"].unique().tolist()
 f1, f2, f3, f4 = st.columns(4)
 
 with f1:
-    filtro_mes = st.selectbox("Mês", meses_opcoes)
+    st.markdown('<div class="filter-label">Mês</div>', unsafe_allow_html=True)
+    filtro_mes = st.selectbox("Mês", meses_opcoes, label_visibility="collapsed")
 
 with f2:
-    filtro_estab = st.selectbox("Estabelecimento", estab_opcoes)
+    st.markdown('<div class="filter-label">Estabelecimento</div>', unsafe_allow_html=True)
+    filtro_estab = st.selectbox("Estabelecimento", estab_opcoes, label_visibility="collapsed")
 
 with f3:
-    filtro_categoria = st.selectbox("Categoria", categoria_opcoes)
+    st.markdown('<div class="filter-label">Categoria</div>', unsafe_allow_html=True)
+    filtro_categoria = st.selectbox("Categoria", categoria_opcoes, label_visibility="collapsed")
 
 with f4:
-    filtro_entrada = st.selectbox("Entrada", entrada_opcoes)
+    st.markdown('<div class="filter-label">Entrada</div>', unsafe_allow_html=True)
+    filtro_entrada = st.selectbox("Entrada", entrada_opcoes, label_visibility="collapsed")
 
 df_filtrado = df.copy()
 
