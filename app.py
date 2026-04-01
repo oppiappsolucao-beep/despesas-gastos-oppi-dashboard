@@ -38,11 +38,43 @@ SCOPES = [
 # =========================================================
 st.markdown("""
 <style>
-    .stApp { background: #f6f7fb; }
+    .stApp {
+        background: #f6f7fb;
+    }
 
     .block-container {
         max-width: 1450px;
-        padding-top: 2.4rem !important;
+        padding-top: 4.2rem !important;
+        padding-bottom: 2rem;
+    }
+
+    .logo-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 0.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .logo-circle {
+        width: 126px;
+        height: 126px;
+        background: #000000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+    }
+
+    .logo-circle img {
+        width: 74%;
+        height: 74%;
+        object-fit: contain;
+        object-position: center center;
+        display: block;
+        transform: translateY(2px);
     }
 
     .main-title {
@@ -50,41 +82,250 @@ st.markdown("""
         font-size: 2.6rem;
         font-weight: 800;
         color: #14213d;
+        margin-bottom: 0.2rem;
+        line-height: 1.1;
     }
 
     .main-subtitle {
         text-align: center;
+        font-size: 1.08rem;
         color: #667085;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.6rem;
+    }
+
+    .top-divider, .section-divider {
+        width: 100%;
+        height: 18px;
+        background: #ffffff;
+        border: 1px solid #ececf3;
+        border-radius: 999px;
+        margin: 0.8rem 0 1.35rem 0;
+    }
+
+    .filter-label {
+        font-size: 0.94rem;
+        color: #2f3552;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
     }
 
     .kpi-card {
-        background: #fff;
-        border-left: 5px solid #e91e63;
-        border-radius: 18px;
-        padding: 1rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        background: #ffffff;
+        border: 1px solid #ececf3;
+        border-left: 6px solid #e91e63;
+        border-radius: 22px;
+        padding: 1.05rem 1.15rem 0.95rem 1.15rem;
+        box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
+        min-height: 150px;
     }
 
+    .kpi-card.roxo { border-left-color: #7c3aed; }
+    .kpi-card.rosa { border-left-color: #e91e63; }
+    .kpi-card.verde { border-left-color: #10b981; }
+    .kpi-card.azul { border-left-color: #3b82f6; }
+    .kpi-card.laranja { border-left-color: #f59e0b; }
+
     .kpi-title {
-        font-size: 0.9rem;
-        color: #666;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #28314f;
+        margin-bottom: 0.8rem;
     }
 
     .kpi-value {
-        font-size: 1.8rem;
+        font-size: 2rem;
         font-weight: 800;
+        color: #081b4b;
+        line-height: 1.05;
+        margin-bottom: 0.72rem;
+    }
+
+    .kpi-caption {
+        font-size: 0.92rem;
+        color: #667085;
+    }
+
+    .section-title {
+        font-size: 1.38rem;
+        font-weight: 800;
+        color: #14213d;
+        margin-bottom: 0.3rem;
+    }
+
+    .section-text {
+        color: #677185;
+        font-size: 0.96rem;
+        margin-bottom: 1rem;
+    }
+
+    .update-card {
+        background: #ffffff;
+        border: 1px solid #ececf3;
+        border-radius: 24px;
+        padding: 1.15rem;
+        box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
+        margin-bottom: 1rem;
+    }
+
+    .item-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0b1d4d;
+        margin-bottom: 0.35rem;
+    }
+
+    .item-meta {
+        color: #64748b;
+        font-size: 0.96rem;
+        line-height: 1.65;
+    }
+
+    .item-meta b {
+        color: #344054;
+    }
+
+    .item-value-label {
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .item-value {
+        font-size: 1.28rem;
+        font-weight: 800;
+        color: #081b4b;
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 0.35rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.86rem;
+        font-weight: 700;
+    }
+
+    .status-pago {
+        background: #dff7e8;
+        color: #118a43;
+    }
+
+    .status-apagar {
+        background: #fde6e6;
+        color: #c62828;
+    }
+
+    .status-areceber {
+        background: #efe3ff;
+        color: #6d28d9;
+    }
+
+    .small-note {
+        font-size: 0.88rem;
+        color: #6b7280;
+        margin-top: 0.45rem;
+    }
+
+    .stButton > button {
+        border-radius: 14px;
+        border: 1px solid #d6d9e5;
+        font-weight: 600;
+        min-height: 44px;
+        background: white;
+    }
+
+    .stButton > button:hover {
+        border-color: #7c3aed;
+        color: #7c3aed;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# LOGO REDONDA (🔥 AQUI ESTÁ O SEGREDO)
+# HELPERS
 # =========================================================
+def normalizar_coluna(col):
+    col = str(col or "")
+    col = col.replace("\ufeff", "").replace("\xa0", " ").strip()
+    return col
+
+def slug_coluna(col):
+    col = normalizar_coluna(col).lower()
+    col = (
+        col.replace("ã", "a")
+        .replace("á", "a")
+        .replace("à", "a")
+        .replace("â", "a")
+        .replace("é", "e")
+        .replace("ê", "e")
+        .replace("í", "i")
+        .replace("ó", "o")
+        .replace("ô", "o")
+        .replace("õ", "o")
+        .replace("ú", "u")
+        .replace("ç", "c")
+    )
+    col = re.sub(r"[^a-z0-9]+", "", col)
+    return col
+
+def encontrar_coluna(df, candidatos):
+    mapa = {slug_coluna(c): c for c in df.columns}
+    for cand in candidatos:
+        slug = slug_coluna(cand)
+        if slug in mapa:
+            return mapa[slug]
+    return None
+
+def parse_brl(valor):
+    if pd.isna(valor):
+        return 0.0
+    s = str(valor).strip()
+    if not s:
+        return 0.0
+    s = s.replace("R$", "").replace("r$", "").strip()
+    s = s.replace(".", "").replace(",", ".")
+    s = re.sub(r"[^0-9.\-]", "", s)
+    try:
+        return float(s)
+    except Exception:
+        return 0.0
+
+def formatar_brl(v):
+    return f"R$ {float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def parse_data_br(valor):
+    if pd.isna(valor):
+        return pd.NaT
+    s = str(valor).strip()
+    if not s:
+        return pd.NaT
+    try:
+        return pd.to_datetime(s, dayfirst=True, errors="coerce")
+    except Exception:
+        return pd.NaT
+
+def extrair_mes_label(data):
+    if pd.isna(data):
+        return "Sem data"
+    meses = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ]
+    return f"{meses[data.month - 1]}/{data.year}"
+
+def status_class(status):
+    s = str(status or "").strip().lower()
+    if s == "pago":
+        return "status-pill status-pago"
+    if s == "a pagar":
+        return "status-pill status-apagar"
+    if s == "a receber":
+        return "status-pill status-areceber"
+    return "status-pill"
+
 def encontrar_logo():
     for nome in LOGO_CANDIDATES:
         p = Path(nome)
-        if p.exists():
+        if p.exists() and p.is_file():
             return p
     return None
 
@@ -100,58 +341,97 @@ def render_logo():
 
         st.markdown(
             f"""
-            <div style="display:flex; justify-content:center; margin-bottom:15px;">
-                <div style="
-                    width:110px;
-                    height:110px;
-                    background:#000;
-                    border-radius:50%;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-                ">
-                    <img src="data:{mime_type};base64,{img_base64}"
-                         style="width:55%; height:auto;">
+            <div class="logo-wrap">
+                <div class="logo-circle">
+                    <img src="data:{mime_type};base64,{img_base64}" alt="Logo Oppi">
                 </div>
             </div>
             """,
             unsafe_allow_html=True
         )
-    except:
+    except Exception:
         pass
 
 # =========================================================
-# GOOGLE
+# GOOGLE SHEETS
 # =========================================================
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def conectar():
     creds = Credentials.from_service_account_info(
-        st.secrets["google"], scopes=SCOPES
+        st.secrets["google"],
+        scopes=SCOPES
     )
     return gspread.authorize(creds)
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=30, show_spinner=False)
 def carregar():
     client = conectar()
     ws = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
-    df = pd.DataFrame(ws.get_all_records())
 
-    df["_valor"] = (
-        df["Valor"]
-        .astype(str)
-        .str.replace("R$", "")
-        .str.replace(".", "")
-        .str.replace(",", ".")
-        .astype(float)
-    )
+    values = ws.get_all_values()
+    if not values:
+        return pd.DataFrame(), {}
 
-    return df, ws
+    headers = [normalizar_coluna(h) for h in values[0]]
+    rows = values[1:]
 
-def atualizar(ws, row, status):
-    headers = ws.row_values(1)
-    col = headers.index("Status") + 1
-    ws.update_cell(row, col, status)
+    rows_pad = []
+    for row in rows:
+        if len(row) < len(headers):
+            row = row + [""] * (len(headers) - len(row))
+        elif len(row) > len(headers):
+            row = row[:len(headers)]
+        rows_pad.append(row)
+
+    df = pd.DataFrame(rows_pad, columns=headers)
+
+    for c in df.columns:
+        df[c] = df[c].astype(str).apply(lambda x: x.strip())
+
+    col_mes = encontrar_coluna(df, ["Mês", "Mes", "Data", "Data do mês", "Data do mes"])
+    col_estabelecimento = encontrar_coluna(df, ["Estabelecimento", "Empresa", "Nome"])
+    col_valor = encontrar_coluna(df, ["Valor", "Valor total", "Preço", "Preco"])
+    col_entrada = encontrar_coluna(df, ["Entrada", "Tipo", "Movimento"])
+    col_categoria = encontrar_coluna(df, ["Categoria", "Grupo"])
+    col_status = encontrar_coluna(df, ["Status", "Situação", "Situacao"])
+    col_detalhes = encontrar_coluna(df, ["Detalhes", "Descrição", "Descricao", "Observação", "Observacao"])
+    col_whatsapp = encontrar_coluna(df, ["Whatsapp", "WhatsApp", "Telefone"])
+
+    df["_mes_raw"] = df[col_mes] if col_mes else ""
+    df["_data_mes"] = df["_mes_raw"].apply(parse_data_br) if col_mes else pd.NaT
+    df["_mes_label"] = df["_data_mes"].apply(extrair_mes_label) if col_mes else "Sem data"
+
+    df["_estabelecimento"] = df[col_estabelecimento] if col_estabelecimento else ""
+    df["_valor_num"] = df[col_valor].apply(parse_brl) if col_valor else 0.0
+    df["_entrada"] = df[col_entrada].astype(str).str.strip() if col_entrada else ""
+    df["_categoria"] = df[col_categoria].astype(str).str.strip() if col_categoria else ""
+    df["_status"] = df[col_status].astype(str).str.strip() if col_status else ""
+    df["_detalhes"] = df[col_detalhes].astype(str).str.strip() if col_detalhes else ""
+    df["_whatsapp"] = df[col_whatsapp].astype(str).str.strip() if col_whatsapp else ""
+
+    df["_sheet_row"] = range(2, len(df) + 2)
+
+    meta = {
+        "status_col_name": col_status,
+    }
+    return df, meta
+
+def atualizar_status(sheet_row, novo_status):
+    client = conectar()
+    ws = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
+    headers = [normalizar_coluna(h) for h in ws.row_values(1)]
+
+    status_col_name = None
+    for h in headers:
+        if slug_coluna(h) in [slug_coluna("Status"), slug_coluna("Situação"), slug_coluna("Situacao")]:
+            status_col_name = h
+            break
+
+    if not status_col_name:
+        raise ValueError("Coluna 'Status' não encontrada na planilha.")
+
+    status_col_idx = headers.index(status_col_name) + 1
+    ws.update_cell(sheet_row, status_col_idx, novo_status)
     st.cache_data.clear()
 
 # =========================================================
@@ -160,52 +440,102 @@ def atualizar(ws, row, status):
 render_logo()
 
 st.markdown('<div class="main-title">Despesas & Gastos OPPI</div>', unsafe_allow_html=True)
-st.markdown('<div class="main-subtitle">Gestão financeira inteligente</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="main-subtitle">Gestão financeira inteligente</div>',
+    unsafe_allow_html=True
+)
 
 # =========================================================
 # LOAD
 # =========================================================
-df, ws = carregar()
+try:
+    df, meta = carregar()
+except Exception as e:
+    st.error("Erro ao conectar com a planilha do Google Sheets.")
+    st.exception(e)
+    st.stop()
+
+if df.empty:
+    st.warning("A planilha está vazia.")
+    st.stop()
+
+if not meta.get("status_col_name"):
+    st.error("A coluna 'Status' não foi encontrada na planilha. Confira o cabeçalho.")
+    st.stop()
 
 # =========================================================
 # KPIs
 # =========================================================
-receita = df[df["Entrada"]=="Receita"]["_valor"].sum()
-despesa = df[df["Entrada"]=="Despesa"]["_valor"].sum()
+receita = df[df["_entrada"].str.lower() == "receita"]["_valor_num"].sum()
+despesa = df[df["_entrada"].str.lower() == "despesa"]["_valor_num"].sum()
 saldo = receita - despesa
 
 c1, c2, c3 = st.columns(3)
 
-c1.markdown(f'<div class="kpi-card"><div class="kpi-title">Receita</div><div class="kpi-value">R$ {receita:,.2f}</div></div>', unsafe_allow_html=True)
-c2.markdown(f'<div class="kpi-card"><div class="kpi-title">Despesa</div><div class="kpi-value">R$ {despesa:,.2f}</div></div>', unsafe_allow_html=True)
-c3.markdown(f'<div class="kpi-card"><div class="kpi-title">Saldo</div><div class="kpi-value">R$ {saldo:,.2f}</div></div>', unsafe_allow_html=True)
+cards = [
+    (c1, "Receita", formatar_brl(receita)),
+    (c2, "Despesa", formatar_brl(despesa)),
+    (c3, "Saldo", formatar_brl(saldo)),
+]
+
+for col, titulo, valor in cards:
+    with col:
+        st.markdown(
+            f"""
+            <div class="kpi-card rosa">
+                <div class="kpi-title">{titulo}</div>
+                <div class="kpi-value">{valor}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 # =========================================================
 # GRÁFICO
 # =========================================================
-st.markdown("### 📊 Categoria")
-cat = df.groupby("Categoria")["_valor"].sum().reset_index()
-fig = px.bar(cat, x="Categoria", y="_valor")
-st.plotly_chart(fig, use_container_width=True)
+st.markdown("## 📊 Categoria")
+
+cat = (
+    df.groupby("_categoria", dropna=False)["_valor_num"]
+    .sum()
+    .reset_index()
+    .rename(columns={"_categoria": "Categoria", "_valor_num": "Valor"})
+)
+cat = cat[cat["Categoria"].astype(str).str.strip() != ""]
+
+if not cat.empty:
+    fig = px.bar(cat, x="Categoria", y="Valor")
+    fig.update_layout(
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(l=20, r=20, t=20, b=20),
+        height=420
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 # =========================================================
 # ATUALIZAR STATUS
 # =========================================================
-st.markdown("### ✏️ Atualizar Status")
+st.markdown("## ✏️ Atualizar Status")
 
-for i, row in df.iterrows():
-    c1, c2, c3, c4 = st.columns([3,1,1,1])
+for _, row in df.iterrows():
+    c1, c2, c3, c4 = st.columns([3, 1, 1, 1])
 
-    c1.write(f"{row['Estabelecimento']} - R$ {row['_valor']:,.2f} - {row['Status']}")
+    estabelecimento = row["_estabelecimento"] if str(row["_estabelecimento"]).strip() else "-"
+    valor_txt = formatar_brl(row["_valor_num"])
+    status_txt = row["_status"] if str(row["_status"]).strip() else "Sem status"
+    sheet_row = int(row["_sheet_row"])
 
-    if c2.button("Pago", key=f"p{i}"):
-        atualizar(ws, i+2, "Pago")
+    c1.write(f"{estabelecimento} - {valor_txt} - {status_txt}")
+
+    if c2.button("Pago", key=f"p{sheet_row}"):
+        atualizar_status(sheet_row, "Pago")
         st.rerun()
 
-    if c3.button("A Pagar", key=f"a{i}"):
-        atualizar(ws, i+2, "A Pagar")
+    if c3.button("A Pagar", key=f"a{sheet_row}"):
+        atualizar_status(sheet_row, "A Pagar")
         st.rerun()
 
-    if c4.button("A Receber", key=f"r{i}"):
-        atualizar(ws, i+2, "A Receber")
+    if c4.button("A Receber", key=f"r{sheet_row}"):
+        atualizar_status(sheet_row, "A Receber")
         st.rerun()
