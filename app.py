@@ -1,3 +1,5 @@
+import base64
+import mimetypes
 import re
 from pathlib import Path
 
@@ -18,7 +20,14 @@ st.set_page_config(
 
 SHEET_ID = "1cQU5tNwSoiepTPHx_Qc7ZF1PcaER2gstW_dZQ0eCrB4"
 WORKSHEET_NAME = "Página1"
-LOGO_PATH = "logo_oppi.png"
+
+# pode ser png, jpg, jpeg ou webp
+LOGO_CANDIDATES = [
+    "logo_oppi.png",
+    "logo_oppi.jpg",
+    "logo_oppi.jpeg",
+    "logo_oppi.webp",
+]
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -38,6 +47,19 @@ st.markdown("""
         max-width: 1450px;
         padding-top: 2.4rem !important;
         padding-bottom: 2rem;
+    }
+
+    .logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 0.65rem;
+    }
+
+    .logo-wrap img {
+        max-width: 120px;
+        width: 100%;
+        height: auto;
+        display: block;
     }
 
     .main-title {
@@ -287,6 +309,34 @@ def status_class(status):
         return "status-pill status-areceber"
     return "status-pill"
 
+def encontrar_logo():
+    for nome in LOGO_CANDIDATES:
+        p = Path(nome)
+        if p.exists() and p.is_file():
+            return p
+    return None
+
+def render_logo():
+    logo_path = encontrar_logo()
+    if not logo_path:
+        return
+
+    try:
+        img_bytes = logo_path.read_bytes()
+        mime_type = mimetypes.guess_type(str(logo_path))[0] or "image/png"
+        img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+        st.markdown(
+            f"""
+            <div class="logo-wrap">
+                <img src="data:{mime_type};base64,{img_base64}" alt="Logo Oppi">
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    except Exception:
+        # não quebra o app se a logo estiver inválida
+        pass
+
 # =========================================================
 # GOOGLE SHEETS
 # =========================================================
@@ -373,11 +423,7 @@ def atualizar_status(sheet_row, novo_status):
 # =========================================================
 # HEADER
 # =========================================================
-logo_file = Path(LOGO_PATH)
-if logo_file.exists():
-    l1, l2, l3 = st.columns([1.6, 1, 1.6])
-    with l2:
-        st.image(str(logo_file), use_container_width=True)
+render_logo()
 
 st.markdown('<div class="main-title">Despesas & Gastos OPPI</div>', unsafe_allow_html=True)
 st.markdown(
