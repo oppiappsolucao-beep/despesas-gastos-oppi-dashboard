@@ -1,4 +1,5 @@
 import base64
+import html
 import mimetypes
 import re
 from pathlib import Path
@@ -138,6 +139,61 @@ st.markdown("""
     }
 
     .kpi-caption {
+        font-size: 0.92rem;
+        color: #667085;
+    }
+
+    .status-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 0px;
+    }
+
+    .status-mini-card {
+        background: #ffffff;
+        border: 1px solid #ececf3;
+        border-radius: 22px;
+        padding: 1rem 1.15rem;
+        box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
+        min-height: 138px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: default;
+    }
+
+    .status-mini-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(20, 20, 43, 0.09);
+    }
+
+    .status-mini-card.pago {
+        border-left: 6px solid #10b981;
+    }
+
+    .status-mini-card.apagar {
+        border-left: 6px solid #f59e0b;
+    }
+
+    .status-mini-card.areceber {
+        border-left: 6px solid #7c3aed;
+    }
+
+    .status-mini-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #28314f;
+        margin-bottom: 0.8rem;
+    }
+
+    .status-mini-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #081b4b;
+        line-height: 1.05;
+        margin-bottom: 0.55rem;
+    }
+
+    .status-mini-caption {
         font-size: 0.92rem;
         color: #667085;
     }
@@ -350,6 +406,32 @@ def render_logo():
     except Exception:
         pass
 
+def montar_tooltip_status(df_base, status_nome):
+    base = df_base[df_base["_status"].str.lower() == status_nome.lower()].copy()
+
+    if base.empty:
+        return "Sem registros nesse status."
+
+    qtd = len(base)
+    valor_total = formatar_brl(base["_valor_num"].sum())
+
+    resumo = [f"Status: {status_nome}", f"Qtd: {qtd}", f"Valor total: {valor_total}", ""]
+
+    top = (
+        base.groupby("_estabelecimento", dropna=False)["_valor_num"]
+        .sum()
+        .reset_index()
+        .sort_values("_valor_num", ascending=False)
+        .head(5)
+    )
+
+    resumo.append("Principais:")
+    for _, r in top.iterrows():
+        nome = str(r["_estabelecimento"]).strip() or "-"
+        resumo.append(f"- {nome}: {formatar_brl(r['_valor_num'])}")
+
+    return "\n".join(resumo)
+
 # =========================================================
 # GOOGLE SHEETS
 # =========================================================
@@ -559,35 +641,41 @@ for col, titulo, valor, legenda, cor in cards:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-c7, c8 = st.columns(2)
+# =========================================================
+# STATUS EM 3 QUADRADOS COM HOVER
+# =========================================================
+tooltip_pago = html.escape(montar_tooltip_status(df_filtrado, "Pago"))
+tooltip_apagar = html.escape(montar_tooltip_status(df_filtrado, "A Pagar"))
+tooltip_areceber = html.escape(montar_tooltip_status(df_filtrado, "A Receber"))
 
-with c7:
-    st.markdown(
-        f"""
-        <div class="kpi-card verde">
-            <div class="kpi-title">Pago</div>
-            <div class="kpi-value">{formatar_brl(total_pago)}</div>
-            <div class="kpi-caption">somatório do status Pago</div>
+qtd_pago = int((df_filtrado["_status"].str.lower() == "pago").sum())
+qtd_apagar = int((df_filtrado["_status"].str.lower() == "a pagar").sum())
+qtd_areceber = int((df_filtrado["_status"].str.lower() == "a receber").sum())
+
+st.markdown(
+    f"""
+    <div class="status-mini-grid">
+        <div class="status-mini-card pago" title="{tooltip_pago}">
+            <div class="status-mini-title">Pago</div>
+            <div class="status-mini-value">{qtd_pago}</div>
+            <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-with c8:
-    qtd_pago = (df_filtrado["_status"].str.lower() == "pago").sum()
-    qtd_apagar = (df_filtrado["_status"].str.lower() == "a pagar").sum()
-    qtd_areceber = (df_filtrado["_status"].str.lower() == "a receber").sum()
-
-    st.markdown(
-        f"""
-        <div class="kpi-card rosa">
-            <div class="kpi-title">Resumo de status</div>
-            <div class="kpi-value">{qtd_pago} / {qtd_apagar} / {qtd_areceber}</div>
-            <div class="kpi-caption">Pago / A Pagar / A Receber</div>
+        <div class="status-mini-card apagar" title="{tooltip_apagar}">
+            <div class="status-mini-title">A Pagar</div>
+            <div class="status-mini-value">{qtd_apagar}</div>
+            <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+
+        <div class="status-mini-card areceber" title="{tooltip_areceber}">
+            <div class="status-mini-title">A Receber</div>
+            <div class="status-mini-value">{qtd_areceber}</div>
+            <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # =========================================================
 # GRÁFICOS
