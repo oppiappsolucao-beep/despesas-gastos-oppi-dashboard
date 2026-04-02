@@ -147,7 +147,11 @@ st.markdown("""
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 16px;
-        margin-top: 0px;
+        margin-top: 0;
+    }
+
+    .status-tooltip-wrap {
+        position: relative;
     }
 
     .status-mini-card {
@@ -196,6 +200,57 @@ st.markdown("""
     .status-mini-caption {
         font-size: 0.92rem;
         color: #667085;
+    }
+
+    .status-hover-box {
+        position: absolute;
+        left: 0;
+        top: calc(100% + 10px);
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #e8eaf2;
+        border-radius: 18px;
+        box-shadow: 0 14px 28px rgba(20, 20, 43, 0.12);
+        padding: 0.9rem 1rem;
+        z-index: 50;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(6px);
+        transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+        pointer-events: none;
+    }
+
+    .status-tooltip-wrap:hover .status-hover-box {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .status-hover-title {
+        font-size: 0.96rem;
+        font-weight: 800;
+        color: #14213d;
+        margin-bottom: 0.55rem;
+    }
+
+    .status-hover-line {
+        font-size: 0.9rem;
+        color: #5f6b7a;
+        margin-bottom: 0.2rem;
+    }
+
+    .status-hover-subtitle {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #28314f;
+        margin-top: 0.55rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .status-hover-item {
+        font-size: 0.88rem;
+        color: #667085;
+        margin-bottom: 0.16rem;
     }
 
     .section-title {
@@ -334,11 +389,9 @@ def parse_brl(valor):
     s = str(valor).strip()
     if not s:
         return 0.0
-
     s = s.replace("R$", "").replace("r$", "").strip()
     s = s.replace(".", "").replace(",", ".")
     s = re.sub(r"[^0-9.\-]", "", s)
-
     try:
         return float(s)
     except Exception:
@@ -388,7 +441,6 @@ def render_logo():
     logo_path = encontrar_logo()
     if not logo_path:
         return
-
     try:
         img_bytes = logo_path.read_bytes()
         mime_type = mimetypes.guess_type(str(logo_path))[0] or "image/png"
@@ -406,16 +458,17 @@ def render_logo():
     except Exception:
         pass
 
-def montar_tooltip_status(df_base, status_nome):
+def montar_detalhes_status_html(df_base, status_nome):
     base = df_base[df_base["_status"].str.lower() == status_nome.lower()].copy()
 
     if base.empty:
-        return "Sem registros nesse status."
+        return """
+        <div class="status-hover-title">Sem registros</div>
+        <div class="status-hover-line">Nenhum item encontrado nesse status.</div>
+        """
 
     qtd = len(base)
     valor_total = formatar_brl(base["_valor_num"].sum())
-
-    resumo = [f"Status: {status_nome}", f"Qtd: {qtd}", f"Valor total: {valor_total}", ""]
 
     top = (
         base.groupby("_estabelecimento", dropna=False)["_valor_num"]
@@ -425,12 +478,19 @@ def montar_tooltip_status(df_base, status_nome):
         .head(5)
     )
 
-    resumo.append("Principais:")
+    itens_html = ""
     for _, r in top.iterrows():
-        nome = str(r["_estabelecimento"]).strip() or "-"
-        resumo.append(f"- {nome}: {formatar_brl(r['_valor_num'])}")
+        nome = html.escape(str(r["_estabelecimento"]).strip() or "-")
+        valor = formatar_brl(r["_valor_num"])
+        itens_html += f'<div class="status-hover-item">• {nome}: {valor}</div>'
 
-    return "\n".join(resumo)
+    return f"""
+    <div class="status-hover-title">{html.escape(status_nome)}</div>
+    <div class="status-hover-line">Qtd: {qtd}</div>
+    <div class="status-hover-line">Valor total: {valor_total}</div>
+    <div class="status-hover-subtitle">Principais:</div>
+    {itens_html}
+    """
 
 # =========================================================
 # GOOGLE SHEETS
@@ -644,33 +704,48 @@ st.markdown("<br>", unsafe_allow_html=True)
 # =========================================================
 # STATUS EM 3 QUADRADOS COM HOVER
 # =========================================================
-tooltip_pago = html.escape(montar_tooltip_status(df_filtrado, "Pago"))
-tooltip_apagar = html.escape(montar_tooltip_status(df_filtrado, "A Pagar"))
-tooltip_areceber = html.escape(montar_tooltip_status(df_filtrado, "A Receber"))
-
 qtd_pago = int((df_filtrado["_status"].str.lower() == "pago").sum())
 qtd_apagar = int((df_filtrado["_status"].str.lower() == "a pagar").sum())
 qtd_areceber = int((df_filtrado["_status"].str.lower() == "a receber").sum())
 
+hover_pago = montar_detalhes_status_html(df_filtrado, "Pago")
+hover_apagar = montar_detalhes_status_html(df_filtrado, "A Pagar")
+hover_areceber = montar_detalhes_status_html(df_filtrado, "A Receber")
+
 st.markdown(
     f"""
     <div class="status-mini-grid">
-        <div class="status-mini-card pago" title="{tooltip_pago}">
-            <div class="status-mini-title">Pago</div>
-            <div class="status-mini-value">{qtd_pago}</div>
-            <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
+        <div class="status-tooltip-wrap">
+            <div class="status-mini-card pago">
+                <div class="status-mini-title">Pago</div>
+                <div class="status-mini-value">{qtd_pago}</div>
+                <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_pago}
+            </div>
         </div>
 
-        <div class="status-mini-card apagar" title="{tooltip_apagar}">
-            <div class="status-mini-title">A Pagar</div>
-            <div class="status-mini-value">{qtd_apagar}</div>
-            <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
+        <div class="status-tooltip-wrap">
+            <div class="status-mini-card apagar">
+                <div class="status-mini-title">A Pagar</div>
+                <div class="status-mini-value">{qtd_apagar}</div>
+                <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_apagar}
+            </div>
         </div>
 
-        <div class="status-mini-card areceber" title="{tooltip_areceber}">
-            <div class="status-mini-title">A Receber</div>
-            <div class="status-mini-value">{qtd_areceber}</div>
-            <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
+        <div class="status-tooltip-wrap">
+            <div class="status-mini-card areceber">
+                <div class="status-mini-title">A Receber</div>
+                <div class="status-mini-value">{qtd_areceber}</div>
+                <div class="status-mini-caption">Passe o mouse para ver os detalhes</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_areceber}
+            </div>
         </div>
     </div>
     """,
