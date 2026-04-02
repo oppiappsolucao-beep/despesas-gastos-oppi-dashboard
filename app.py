@@ -59,19 +59,18 @@ st.markdown("""
     .logo-circle {
         width: 142px;
         height: 142px;
-        background: #000000;
         border-radius: 50%;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
-        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
     }
 
     .logo-circle img {
-        width: 98px;
-        height: 98px;
-        object-fit: contain;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         object-position: center center;
         display: block;
     }
