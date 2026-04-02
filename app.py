@@ -45,19 +45,20 @@ st.markdown("""
 
     .block-container {
         max-width: 1450px;
-        padding-top: 2.4rem !important;
+        padding-top: 3.6rem !important;
         padding-bottom: 2rem;
     }
 
     .logo-wrap {
         display: flex;
         justify-content: center;
-        margin-bottom: 0.65rem;
+        margin-top: 0.35rem;
+        margin-bottom: 0.8rem;
     }
 
     .logo-circle {
-        width: 132px;
-        height: 132px;
+        width: 142px;
+        height: 142px;
         background: #000000;
         border-radius: 50%;
         display: flex;
@@ -68,8 +69,8 @@ st.markdown("""
     }
 
     .logo-circle img {
-        width: 78px;
-        height: 78px;
+        width: 98px;
+        height: 98px;
         object-fit: contain;
         object-position: center center;
         display: block;
