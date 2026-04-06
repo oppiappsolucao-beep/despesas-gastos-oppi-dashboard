@@ -1067,7 +1067,7 @@ else:
 
             novo_valor = st.text_input(
                 "Editar valor",
-                value=str(row["_mes_raw"] and formatar_valor_planilha(row["_valor_num"]) or formatar_valor_planilha(row["_valor_num"])),
+                value=formatar_valor_planilha(row["_valor_num"]),
                 key=f"novo_valor_{sheet_row}",
                 label_visibility="collapsed",
                 placeholder="Ex.: 1574,00"
@@ -1082,10 +1082,10 @@ else:
             )
 
         with b0:
-            if st.button("Salvar valor", key=f"salvar_valor_{sheet_row}", use_container_width=True):
+            if st.button("Salvar alterações", key=f"salvar_valor_{sheet_row}", use_container_width=True):
                 try:
                     atualizar_valor(sheet_row, novo_valor)
-                    st.success(f"Valor da linha {sheet_row} atualizado com sucesso.")
+                    st.success(f"Alterações da linha {sheet_row} salvas com sucesso.")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erro ao atualizar valor: {e}")
