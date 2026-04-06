@@ -1,4 +1,5 @@
 import base64
+import html
 import mimetypes
 import re
 from pathlib import Path
@@ -140,6 +141,123 @@ st.markdown("""
     .kpi-caption {
         font-size: 0.92rem;
         color: #667085;
+    }
+
+    /* ========= RESUMO EM 3 QUADRADINHOS ========= */
+    .status-triplet-wrap {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 0.25rem;
+    }
+
+    .status-mini-wrap {
+        position: relative;
+        min-width: 0;
+    }
+
+    .status-mini-card {
+        background: #ffffff;
+        border: 1px solid #ececf3;
+        border-radius: 16px;
+        padding: 0.75rem 0.7rem;
+        min-height: 110px;
+        box-shadow: 0 4px 12px rgba(20, 20, 43, 0.04);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: default;
+    }
+
+    .status-mini-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(20, 20, 43, 0.08);
+    }
+
+    .status-mini-card.pago {
+        border-left: 5px solid #10b981;
+    }
+
+    .status-mini-card.apagar {
+        border-left: 5px solid #f59e0b;
+    }
+
+    .status-mini-card.areceber {
+        border-left: 5px solid #7c3aed;
+    }
+
+    .status-mini-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #28314f;
+        margin-bottom: 0.35rem;
+        line-height: 1.1;
+    }
+
+    .status-mini-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #081b4b;
+        line-height: 1.05;
+        margin-bottom: 0.3rem;
+    }
+
+    .status-mini-caption {
+        font-size: 0.74rem;
+        color: #667085;
+        line-height: 1.15;
+    }
+
+    .status-hover-box {
+        position: absolute;
+        left: 0;
+        top: calc(100% + 8px);
+        width: 250px;
+        background: #ffffff;
+        border: 1px solid #e8eaf2;
+        border-radius: 16px;
+        box-shadow: 0 14px 28px rgba(20, 20, 43, 0.12);
+        padding: 0.9rem 1rem;
+        z-index: 60;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(6px);
+        transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+        pointer-events: none;
+    }
+
+    .status-mini-wrap:hover .status-hover-box {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .status-hover-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #14213d;
+        margin-bottom: 0.45rem;
+    }
+
+    .status-hover-line {
+        font-size: 0.87rem;
+        color: #5f6b7a;
+        margin-bottom: 0.15rem;
+    }
+
+    .status-hover-subtitle {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #28314f;
+        margin-top: 0.55rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .status-hover-item {
+        font-size: 0.84rem;
+        color: #667085;
+        margin-bottom: 0.14rem;
     }
 
     .section-title {
@@ -350,6 +468,40 @@ def render_logo():
     except Exception:
         pass
 
+def montar_detalhes_status_html(df_base, status_nome):
+    base = df_base[df_base["_status"].str.lower() == status_nome.lower()].copy()
+
+    if base.empty:
+        return """
+        <div class="status-hover-title">Sem registros</div>
+        <div class="status-hover-line">Nenhum item encontrado nesse status.</div>
+        """
+
+    qtd = len(base)
+    valor_total = formatar_brl(base["_valor_num"].sum())
+
+    top = (
+        base.groupby("_estabelecimento", dropna=False)["_valor_num"]
+        .sum()
+        .reset_index()
+        .sort_values("_valor_num", ascending=False)
+        .head(5)
+    )
+
+    itens_html = ""
+    for _, r in top.iterrows():
+        nome = html.escape(str(r["_estabelecimento"]).strip() or "-")
+        valor = formatar_brl(r["_valor_num"])
+        itens_html += f'<div class="status-hover-item">• {nome}: {valor}</div>'
+
+    return f"""
+    <div class="status-hover-title">{html.escape(status_nome)}</div>
+    <div class="status-hover-line">Qtd: {qtd}</div>
+    <div class="status-hover-line">Valor total: {valor_total}</div>
+    <div class="status-hover-subtitle">Principais:</div>
+    {itens_html}
+    """
+
 # =========================================================
 # GOOGLE SHEETS
 # =========================================================
@@ -559,7 +711,18 @@ for col, titulo, valor, legenda, cor in cards:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-c7, c8 = st.columns(2)
+# =========================================================
+# PAGO + RESUMO DE STATUS
+# =========================================================
+c7, c8 = st.columns([1.05, 1])
+
+qtd_pago = int((df_filtrado["_status"].str.lower() == "pago").sum())
+qtd_apagar = int((df_filtrado["_status"].str.lower() == "a pagar").sum())
+qtd_areceber = int((df_filtrado["_status"].str.lower() == "a receber").sum())
+
+hover_pago = montar_detalhes_status_html(df_filtrado, "Pago")
+hover_apagar = montar_detalhes_status_html(df_filtrado, "A Pagar")
+hover_areceber = montar_detalhes_status_html(df_filtrado, "A Receber")
 
 with c7:
     st.markdown(
@@ -574,16 +737,44 @@ with c7:
     )
 
 with c8:
-    qtd_pago = (df_filtrado["_status"].str.lower() == "pago").sum()
-    qtd_apagar = (df_filtrado["_status"].str.lower() == "a pagar").sum()
-    qtd_areceber = (df_filtrado["_status"].str.lower() == "a receber").sum()
-
     st.markdown(
         f"""
         <div class="kpi-card rosa">
             <div class="kpi-title">Resumo de status</div>
-            <div class="kpi-value">{qtd_pago} / {qtd_apagar} / {qtd_areceber}</div>
-            <div class="kpi-caption">Pago / A Pagar / A Receber</div>
+            <div class="status-triplet-wrap">
+                <div class="status-mini-wrap">
+                    <div class="status-mini-card pago">
+                        <div class="status-mini-title">Pago</div>
+                        <div class="status-mini-value">{qtd_pago}</div>
+                        <div class="status-mini-caption">Passe o mouse</div>
+                    </div>
+                    <div class="status-hover-box">
+                        {hover_pago}
+                    </div>
+                </div>
+
+                <div class="status-mini-wrap">
+                    <div class="status-mini-card apagar">
+                        <div class="status-mini-title">A Pagar</div>
+                        <div class="status-mini-value">{qtd_apagar}</div>
+                        <div class="status-mini-caption">Passe o mouse</div>
+                    </div>
+                    <div class="status-hover-box">
+                        {hover_apagar}
+                    </div>
+                </div>
+
+                <div class="status-mini-wrap">
+                    <div class="status-mini-card areceber">
+                        <div class="status-mini-title">A Receber</div>
+                        <div class="status-mini-value">{qtd_areceber}</div>
+                        <div class="status-mini-caption">Passe o mouse</div>
+                    </div>
+                    <div class="status-hover-box">
+                        {hover_areceber}
+                    </div>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
