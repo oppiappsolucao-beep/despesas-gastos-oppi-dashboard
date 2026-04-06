@@ -143,14 +143,6 @@ st.markdown("""
         color: #667085;
     }
 
-    .status-triplet-wrap {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        width: 100%;
-        height: 100%;
-    }
-
     .status-mini-wrap {
         position: relative;
         min-width: 0;
@@ -159,15 +151,15 @@ st.markdown("""
     .status-mini-card {
         background: #ffffff;
         border: 1px solid #ececf3;
-        border-radius: 16px;
-        padding: 0.8rem 0.85rem;
+        border-radius: 18px;
+        padding: 0.9rem 0.85rem;
         min-height: 150px;
         box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-        cursor: default;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: default;
     }
 
     .status-mini-card:hover {
@@ -188,7 +180,7 @@ st.markdown("""
     }
 
     .status-mini-title {
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         font-weight: 700;
         color: #28314f;
         margin-bottom: 0.45rem;
@@ -196,11 +188,11 @@ st.markdown("""
     }
 
     .status-mini-value {
-        font-size: 1.55rem;
+        font-size: 1.7rem;
         font-weight: 800;
         color: #081b4b;
         line-height: 1.05;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.35rem;
     }
 
     .status-mini-caption {
@@ -214,13 +206,12 @@ st.markdown("""
         left: 0;
         top: calc(100% + 8px);
         width: 260px;
-        max-width: 320px;
         background: #ffffff;
         border: 1px solid #e8eaf2;
         border-radius: 16px;
         box-shadow: 0 14px 28px rgba(20, 20, 43, 0.12);
         padding: 0.9rem 1rem;
-        z-index: 50;
+        z-index: 60;
         opacity: 0;
         visibility: hidden;
         transform: translateY(6px);
@@ -713,10 +704,8 @@ for col, titulo, valor, legenda, cor in cards:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # =========================================================
-# PAGO + RESUMO DE STATUS (3 QUADRADINHOS)
+# PAGO + 3 QUADRADINHOS
 # =========================================================
-c7, c8 = st.columns([1.1, 1])
-
 qtd_pago = int((df_filtrado["_status"].str.lower() == "pago").sum())
 qtd_apagar = int((df_filtrado["_status"].str.lower() == "a pagar").sum())
 qtd_areceber = int((df_filtrado["_status"].str.lower() == "a receber").sum())
@@ -724,6 +713,8 @@ qtd_areceber = int((df_filtrado["_status"].str.lower() == "a receber").sum())
 hover_pago = montar_detalhes_status_html(df_filtrado, "Pago")
 hover_apagar = montar_detalhes_status_html(df_filtrado, "A Pagar")
 hover_areceber = montar_detalhes_status_html(df_filtrado, "A Receber")
+
+c7, c8 = st.columns([1.1, 1])
 
 with c7:
     st.markdown(
@@ -738,48 +729,58 @@ with c7:
     )
 
 with c8:
-    st.markdown(
-        f"""
-        <div class="kpi-card rosa">
-            <div class="kpi-title">Resumo de status</div>
-            <div class="status-triplet-wrap">
-                <div class="status-mini-wrap">
-                    <div class="status-mini-card pago">
-                        <div class="status-mini-title">Pago</div>
-                        <div class="status-mini-value">{qtd_pago}</div>
-                        <div class="status-mini-caption">Passe o mouse</div>
-                    </div>
-                    <div class="status-hover-box">
-                        {hover_pago}
-                    </div>
-                </div>
+    m1, m2, m3 = st.columns(3)
 
-                <div class="status-mini-wrap">
-                    <div class="status-mini-card apagar">
-                        <div class="status-mini-title">A Pagar</div>
-                        <div class="status-mini-value">{qtd_apagar}</div>
-                        <div class="status-mini-caption">Passe o mouse</div>
-                    </div>
-                    <div class="status-hover-box">
-                        {hover_apagar}
-                    </div>
+    with m1:
+        st.markdown(
+            f"""
+            <div class="status-mini-wrap">
+                <div class="status-mini-card pago">
+                    <div class="status-mini-title">Pago</div>
+                    <div class="status-mini-value">{qtd_pago}</div>
+                    <div class="status-mini-caption">Passe o mouse</div>
                 </div>
-
-                <div class="status-mini-wrap">
-                    <div class="status-mini-card areceber">
-                        <div class="status-mini-title">A Receber</div>
-                        <div class="status-mini-value">{qtd_areceber}</div>
-                        <div class="status-mini-caption">Passe o mouse</div>
-                    </div>
-                    <div class="status-hover-box">
-                        {hover_areceber}
-                    </div>
+                <div class="status-hover-box">
+                    {hover_pago}
                 </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+            """,
+            unsafe_allow_html=True
+        )
+
+    with m2:
+        st.markdown(
+            f"""
+            <div class="status-mini-wrap">
+                <div class="status-mini-card apagar">
+                    <div class="status-mini-title">A Pagar</div>
+                    <div class="status-mini-value">{qtd_apagar}</div>
+                    <div class="status-mini-caption">Passe o mouse</div>
+                </div>
+                <div class="status-hover-box">
+                    {hover_apagar}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with m3:
+        st.markdown(
+            f"""
+            <div class="status-mini-wrap">
+                <div class="status-mini-card areceber">
+                    <div class="status-mini-title">A Receber</div>
+                    <div class="status-mini-value">{qtd_areceber}</div>
+                    <div class="status-mini-caption">Passe o mouse</div>
+                </div>
+                <div class="status-hover-box">
+                    {hover_areceber}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 # =========================================================
 # GRÁFICOS
