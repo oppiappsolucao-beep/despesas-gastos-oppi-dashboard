@@ -3,6 +3,8 @@ import html
 import mimetypes
 import re
 from pathlib import Path
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import gspread
 import pandas as pd
@@ -141,6 +143,17 @@ st.markdown("""
     .kpi-caption {
         font-size: 0.92rem;
         color: #667085;
+    }
+
+    .forecast-line {
+        font-size: 0.95rem;
+        color: #667085;
+        margin-bottom: 0.35rem;
+        line-height: 1.45;
+    }
+
+    .forecast-line b {
+        color: #14213d;
     }
 
     .status-mini-wrap {
@@ -682,6 +695,45 @@ total_areceber = df_filtrado.loc[
     df_filtrado["_status"].str.lower() == "a receber", "_valor_num"
 ].sum()
 
+# =========================================================
+# PREVISÕES
+# Hoje = hoje
+# Próximos 7 dias = amanhã até +7 dias
+# =========================================================
+hoje = datetime.now(ZoneInfo("America/Sao_Paulo")).date()
+amanha = hoje + timedelta(days=1)
+fim_7_dias = hoje + timedelta(days=7)
+
+df_prev = df_filtrado.copy()
+df_prev = df_prev[df_prev["_data_mes"].notna()].copy()
+df_prev["_data_ref"] = pd.to_datetime(df_prev["_data_mes"]).dt.date
+
+ganhos_hoje = df_prev.loc[
+    (df_prev["_entrada"].str.lower() == "receita") &
+    (df_prev["_data_ref"] == hoje),
+    "_valor_num"
+].sum()
+
+despesas_hoje = df_prev.loc[
+    (df_prev["_entrada"].str.lower() == "despesa") &
+    (df_prev["_data_ref"] == hoje),
+    "_valor_num"
+].sum()
+
+ganhos_7_dias = df_prev.loc[
+    (df_prev["_entrada"].str.lower() == "receita") &
+    (df_prev["_data_ref"] >= amanha) &
+    (df_prev["_data_ref"] <= fim_7_dias),
+    "_valor_num"
+].sum()
+
+despesas_7_dias = df_prev.loc[
+    (df_prev["_entrada"].str.lower() == "despesa") &
+    (df_prev["_data_ref"] >= amanha) &
+    (df_prev["_data_ref"] <= fim_7_dias),
+    "_valor_num"
+].sum()
+
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 
 cards = [
@@ -786,6 +838,39 @@ with c8:
             """,
             unsafe_allow_html=True
         )
+
+# =========================================================
+# PREVISÕES
+# =========================================================
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+p1, p2 = st.columns(2)
+
+with p1:
+    st.markdown(
+        f"""
+        <div class="kpi-card verde">
+            <div class="kpi-title">Previsão de ganhos</div>
+            <div class="forecast-line"><b>Hoje:</b> {formatar_brl(ganhos_hoje)}</div>
+            <div class="forecast-line"><b>Próximos 7 dias:</b> {formatar_brl(ganhos_7_dias)}</div>
+            <div class="kpi-caption">baseado nas receitas pelas datas da planilha</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with p2:
+    st.markdown(
+        f"""
+        <div class="kpi-card rosa">
+            <div class="kpi-title">Previsão de despesas</div>
+            <div class="forecast-line"><b>Hoje:</b> {formatar_brl(despesas_hoje)}</div>
+            <div class="forecast-line"><b>Próximos 7 dias:</b> {formatar_brl(despesas_7_dias)}</div>
+            <div class="kpi-caption">baseado nas despesas pelas datas da planilha</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # =========================================================
 # GRÁFICOS
