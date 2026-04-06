@@ -116,7 +116,7 @@ st.markdown("""
         border-radius: 22px;
         padding: 1.05rem 1.15rem 0.95rem 1.15rem;
         box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
-        min-height: 170px;
+        min-height: 150px;
     }
 
     .kpi-card.roxo { border-left-color: #7c3aed; }
@@ -145,24 +145,15 @@ st.markdown("""
         color: #667085;
     }
 
-    .forecast-block {
-        margin-bottom: 0.72rem;
+    .forecast-line {
+        font-size: 0.98rem;
+        color: #667085;
+        margin-bottom: 0.38rem;
+        line-height: 1.5;
     }
 
-    .forecast-label {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #28314f;
-        margin-bottom: 0.15rem;
-        line-height: 1.2;
-    }
-
-    .forecast-value-big {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #081b4b;
-        line-height: 1.05;
-        margin-bottom: 0.05rem;
+    .forecast-line b {
+        color: #14213d;
     }
 
     .status-mini-wrap {
@@ -860,17 +851,8 @@ with p1:
         f"""
         <div class="kpi-card verde">
             <div class="kpi-title">Previsões no dia</div>
-
-            <div class="forecast-block">
-                <div class="forecast-label">Ganhos</div>
-                <div class="forecast-value-big">{formatar_brl(ganhos_hoje)}</div>
-            </div>
-
-            <div class="forecast-block">
-                <div class="forecast-label">Despesas</div>
-                <div class="forecast-value-big">{formatar_brl(despesas_hoje)}</div>
-            </div>
-
+            <div class="forecast-line"><b>Ganhos:</b> {formatar_brl(ganhos_hoje)}</div>
+            <div class="forecast-line"><b>Despesas:</b> {formatar_brl(despesas_hoje)}</div>
             <div class="kpi-caption">baseado nas datas de hoje da planilha</div>
         </div>
         """,
@@ -882,17 +864,8 @@ with p2:
         f"""
         <div class="kpi-card rosa">
             <div class="kpi-title">Previsões dos próximos 7 dias</div>
-
-            <div class="forecast-block">
-                <div class="forecast-label">Ganhos</div>
-                <div class="forecast-value-big">{formatar_brl(ganhos_7_dias)}</div>
-            </div>
-
-            <div class="forecast-block">
-                <div class="forecast-label">Despesas</div>
-                <div class="forecast-value-big">{formatar_brl(despesas_7_dias)}</div>
-            </div>
-
+            <div class="forecast-line"><b>Ganhos:</b> {formatar_brl(ganhos_7_dias)}</div>
+            <div class="forecast-line"><b>Despesas:</b> {formatar_brl(despesas_7_dias)}</div>
             <div class="kpi-caption">baseado nas datas futuras da planilha</div>
         </div>
         """,
