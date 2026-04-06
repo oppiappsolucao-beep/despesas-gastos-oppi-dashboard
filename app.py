@@ -314,6 +314,7 @@ st.markdown("""
         font-size: 1.28rem;
         font-weight: 800;
         color: #081b4b;
+        margin-bottom: 0.45rem;
     }
 
     .status-pill {
@@ -343,6 +344,12 @@ st.markdown("""
         font-size: 0.88rem;
         color: #6b7280;
         margin-top: 0.45rem;
+    }
+
+    .edit-hint {
+        font-size: 0.78rem;
+        color: #8b93a7;
+        margin-top: 0.2rem;
     }
 
     .stButton > button {
@@ -413,6 +420,9 @@ def parse_brl(valor):
 
 def formatar_brl(v):
     return f"R$ {float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def formatar_valor_planilha(v):
+    return f"{float(v):.2f}".replace(".", ",")
 
 def parse_data_br(valor):
     if pd.isna(valor):
@@ -574,6 +584,7 @@ def carregar():
 
     meta = {
         "status_col_name": col_status,
+        "valor_col_name": col_valor,
     }
     return df, meta
 
@@ -593,6 +604,33 @@ def atualizar_status(sheet_row, novo_status):
 
     status_col_idx = headers.index(status_col_name) + 1
     ws.update_cell(sheet_row, status_col_idx, novo_status)
+    st.cache_data.clear()
+
+def atualizar_valor(sheet_row, novo_valor):
+    valor_num = parse_brl(novo_valor)
+    if novo_valor is None or str(novo_valor).strip() == "":
+        raise ValueError("Digite um valor antes de salvar.")
+
+    client = conectar()
+    ws = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
+    headers = [normalizar_coluna(h) for h in ws.row_values(1)]
+
+    valor_col_name = None
+    for h in headers:
+        if slug_coluna(h) in [
+            slug_coluna("Valor"),
+            slug_coluna("Valor total"),
+            slug_coluna("Preço"),
+            slug_coluna("Preco"),
+        ]:
+            valor_col_name = h
+            break
+
+    if not valor_col_name:
+        raise ValueError("Coluna 'Valor' não encontrada na planilha.")
+
+    valor_col_idx = headers.index(valor_col_name) + 1
+    ws.update_cell(sheet_row, valor_col_idx, formatar_valor_planilha(valor_num))
     st.cache_data.clear()
 
 # =========================================================
@@ -623,6 +661,10 @@ if df.empty:
 
 if not meta.get("status_col_name"):
     st.error("A coluna 'Status' não foi encontrada na planilha. Confira o cabeçalho.")
+    st.stop()
+
+if not meta.get("valor_col_name"):
+    st.error("A coluna 'Valor' não foi encontrada na planilha. Confira o cabeçalho.")
     st.stop()
 
 # =========================================================
@@ -948,12 +990,12 @@ with g2:
         st.info("Sem dados para o gráfico de status.")
 
 # =========================================================
-# ATUALIZAR STATUS
+# ATUALIZAR STATUS / VALOR
 # =========================================================
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-st.markdown('<div class="section-title">✏️ Atualizar status</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">✏️ Atualizar status e valor</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="section-text">Altere o campo <b>Status</b> diretamente pelo dashboard. Use a busca para localizar por estabelecimento, categoria, detalhes ou whatsapp.</div>',
+    '<div class="section-text">Altere o campo <b>Status</b> e também o <b>Valor</b> diretamente pelo dashboard. Use a busca para localizar por estabelecimento, categoria, detalhes ou whatsapp.</div>',
     unsafe_allow_html=True
 )
 
@@ -1002,7 +1044,7 @@ else:
 
         st.markdown('<div class="update-card">', unsafe_allow_html=True)
 
-        info1, info2, info3, b1, b2, b3 = st.columns([3.3, 1.2, 1.2, 1.1, 1.1, 1.1])
+        info1, info2, info3, b0, b1, b2, b3 = st.columns([3.1, 1.5, 1.2, 1.1, 1.0, 1.0, 1.0])
 
         with info1:
             st.markdown(f'<div class="item-title">{estabelecimento}</div>', unsafe_allow_html=True)
@@ -1023,12 +1065,30 @@ else:
             st.markdown('<div class="item-value-label">Valor</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="item-value">{valor_txt}</div>', unsafe_allow_html=True)
 
+            novo_valor = st.text_input(
+                "Editar valor",
+                value=str(row["_mes_raw"] and formatar_valor_planilha(row["_valor_num"]) or formatar_valor_planilha(row["_valor_num"])),
+                key=f"novo_valor_{sheet_row}",
+                label_visibility="collapsed",
+                placeholder="Ex.: 1574,00"
+            )
+            st.markdown('<div class="edit-hint">Digite o novo valor</div>', unsafe_allow_html=True)
+
         with info3:
             st.markdown('<div class="item-value-label">Status atual</div>', unsafe_allow_html=True)
             st.markdown(
                 f'<span class="{status_class(status_atual)}">{status_atual}</span>',
                 unsafe_allow_html=True
             )
+
+        with b0:
+            if st.button("Salvar valor", key=f"salvar_valor_{sheet_row}", use_container_width=True):
+                try:
+                    atualizar_valor(sheet_row, novo_valor)
+                    st.success(f"Valor da linha {sheet_row} atualizado com sucesso.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao atualizar valor: {e}")
 
         with b1:
             if st.button("Pago", key=f"pago_{sheet_row}", use_container_width=True):
