@@ -146,10 +146,10 @@ st.markdown("""
     }
 
     .forecast-line {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         color: #667085;
-        margin-bottom: 0.35rem;
-        line-height: 1.45;
+        margin-bottom: 0.38rem;
+        line-height: 1.5;
     }
 
     .forecast-line b {
@@ -850,10 +850,10 @@ with p1:
     st.markdown(
         f"""
         <div class="kpi-card verde">
-            <div class="kpi-title">Previsão de ganhos</div>
-            <div class="forecast-line"><b>Hoje:</b> {formatar_brl(ganhos_hoje)}</div>
-            <div class="forecast-line"><b>Próximos 7 dias:</b> {formatar_brl(ganhos_7_dias)}</div>
-            <div class="kpi-caption">baseado nas receitas pelas datas da planilha</div>
+            <div class="kpi-title">Previsões no dia</div>
+            <div class="forecast-line"><b>Ganhos:</b> {formatar_brl(ganhos_hoje)}</div>
+            <div class="forecast-line"><b>Despesas:</b> {formatar_brl(despesas_hoje)}</div>
+            <div class="kpi-caption">baseado nas datas de hoje da planilha</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -863,10 +863,10 @@ with p2:
     st.markdown(
         f"""
         <div class="kpi-card rosa">
-            <div class="kpi-title">Previsão de despesas</div>
-            <div class="forecast-line"><b>Hoje:</b> {formatar_brl(despesas_hoje)}</div>
-            <div class="forecast-line"><b>Próximos 7 dias:</b> {formatar_brl(despesas_7_dias)}</div>
-            <div class="kpi-caption">baseado nas despesas pelas datas da planilha</div>
+            <div class="kpi-title">Previsões dos próximos 7 dias</div>
+            <div class="forecast-line"><b>Ganhos:</b> {formatar_brl(ganhos_7_dias)}</div>
+            <div class="forecast-line"><b>Despesas:</b> {formatar_brl(despesas_7_dias)}</div>
+            <div class="kpi-caption">baseado nas datas futuras da planilha</div>
         </div>
         """,
         unsafe_allow_html=True
