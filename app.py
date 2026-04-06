@@ -1044,7 +1044,7 @@ else:
 
         st.markdown('<div class="update-card">', unsafe_allow_html=True)
 
-        info1, info2, info3, b0, b1, b2, b3 = st.columns([3.1, 1.5, 1.2, 1.1, 1.0, 1.0, 1.0])
+        info1, info2, info3, b0, b1, b2, b3 = st.columns([3.0, 1.45, 1.1, 1.35, 0.95, 0.95, 1.0])
 
         with info1:
             st.markdown(f'<div class="item-title">{estabelecimento}</div>', unsafe_allow_html=True)
