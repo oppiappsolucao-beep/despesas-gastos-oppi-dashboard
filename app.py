@@ -486,13 +486,18 @@ def montar_detalhes_status_html(df_base, status_nome):
         valor = formatar_brl(r["_valor_num"])
         itens_html += f'<div class="status-hover-item">• {nome}: {valor}</div>'
 
-    return f"""
+    html_final = f"""
     <div class="status-hover-title">{html.escape(status_nome)}</div>
     <div class="status-hover-line">Qtd: {qtd}</div>
     <div class="status-hover-line">Valor total: {valor_total}</div>
     <div class="status-hover-subtitle">Principais:</div>
     {itens_html}
     """
+
+    html_final = html_final.replace("&lt;/div&gt;", "")
+    html_final = html_final.replace("</div></div>", "</div>")
+
+    return html_final.strip()
 
 # =========================================================
 # GOOGLE SHEETS
