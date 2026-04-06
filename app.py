@@ -116,7 +116,11 @@ st.markdown("""
         border-radius: 22px;
         padding: 1.05rem 1.15rem 0.95rem 1.15rem;
         box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
-        min-height: 150px;
+        min-height: 205px;
+        height: 205px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
     }
 
     .kpi-card.roxo { border-left-color: #7c3aed; }
@@ -136,8 +140,11 @@ st.markdown("""
         font-size: 2rem;
         font-weight: 800;
         color: #081b4b;
-        line-height: 1.05;
+        line-height: 1.15;
         margin-bottom: 0.72rem;
+        white-space: nowrap;
+        word-break: keep-all;
+        overflow-wrap: normal;
     }
 
     .kpi-caption {
@@ -167,6 +174,7 @@ st.markdown("""
         border-radius: 18px;
         padding: 0.9rem 0.85rem;
         min-height: 150px;
+        height: 150px;
         box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
         display: flex;
         flex-direction: column;
@@ -725,16 +733,16 @@ total_despesas = df_filtrado.loc[
 
 saldo = total_receitas - total_despesas
 
-total_pago = df_filtrado.loc[
-    df_filtrado["_status"].str.lower() == "pago", "_valor_num"
-].sum()
-
 total_apagar = df_filtrado.loc[
     df_filtrado["_status"].str.lower() == "a pagar", "_valor_num"
 ].sum()
 
 total_areceber = df_filtrado.loc[
     df_filtrado["_status"].str.lower() == "a receber", "_valor_num"
+].sum()
+
+total_pago = df_filtrado.loc[
+    df_filtrado["_status"].str.lower() == "pago", "_valor_num"
 ].sum()
 
 # =========================================================
