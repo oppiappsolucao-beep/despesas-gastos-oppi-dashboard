@@ -923,10 +923,11 @@ g1, g2 = st.columns(2)
 
 with g1:
     st.markdown('<div class="section-title">📊 Valor por categoria</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-text">Soma dos valores agrupados por categoria.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-text">Soma das despesas agrupadas por categoria.</div>', unsafe_allow_html=True)
 
     base_categoria = (
-        df_filtrado.groupby("_categoria", dropna=False)["_valor_num"]
+        df_filtrado[df_filtrado["_entrada"].str.lower() == "despesa"]
+        .groupby("_categoria", dropna=False)["_valor_num"]
         .sum()
         .reset_index()
         .rename(columns={"_categoria": "Categoria", "_valor_num": "Valor"})
@@ -953,7 +954,7 @@ with g1:
         fig_cat.update_yaxes(tickprefix="R$ ")
         st.plotly_chart(fig_cat, use_container_width=True)
     else:
-        st.info("Sem dados para o gráfico de categoria.")
+        st.info("Sem dados de despesas para o gráfico de categoria.")
 
 with g2:
     st.markdown('<div class="section-title">💰 Valor por status</div>', unsafe_allow_html=True)
