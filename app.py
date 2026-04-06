@@ -114,13 +114,14 @@ st.markdown("""
         border: 1px solid #ececf3;
         border-left: 6px solid #e91e63;
         border-radius: 22px;
-        padding: 1.05rem 1.15rem 0.95rem 1.15rem;
+        padding: 1rem 1rem 0.95rem 1rem;
         box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
         min-height: 205px;
         height: 205px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
+        overflow: hidden;
     }
 
     .kpi-card.roxo { border-left-color: #7c3aed; }
@@ -130,14 +131,14 @@ st.markdown("""
     .kpi-card.laranja { border-left-color: #f59e0b; }
 
     .kpi-title {
-        font-size: 1rem;
+        font-size: 0.98rem;
         font-weight: 700;
         color: #28314f;
         margin-bottom: 0.8rem;
     }
 
     .kpi-value {
-        font-size: 2rem;
+        font-size: clamp(1.15rem, 1.55vw, 1.75rem);
         font-weight: 800;
         color: #081b4b;
         line-height: 1.15;
@@ -145,6 +146,9 @@ st.markdown("""
         white-space: nowrap;
         word-break: keep-all;
         overflow-wrap: normal;
+        overflow: hidden;
+        text-overflow: clip;
+        max-width: 100%;
     }
 
     .kpi-caption {
@@ -181,6 +185,7 @@ st.markdown("""
         justify-content: center;
         transition: transform 0.15s ease, box-shadow 0.15s ease;
         cursor: default;
+        overflow: hidden;
     }
 
     .status-mini-card:hover {
