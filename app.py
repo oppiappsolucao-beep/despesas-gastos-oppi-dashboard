@@ -36,6 +36,8 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
 ]
 
+TZ = ZoneInfo("America/Sao_Paulo")
+
 # =========================================================
 # ESTILO
 # =========================================================
@@ -46,27 +48,28 @@ st.markdown("""
     }
 
     .block-container {
-        max-width: 1450px;
-        padding-top: 3.6rem !important;
+        max-width: 1500px;
+        padding-top: 3.2rem !important;
         padding-bottom: 2rem;
     }
 
     .logo-wrap {
         display: flex;
         justify-content: center;
-        margin-top: 0.35rem;
+        margin-top: 0.2rem;
         margin-bottom: 0.8rem;
     }
 
     .logo-circle {
-        width: 142px;
-        height: 142px;
+        width: 138px;
+        height: 138px;
         border-radius: 50%;
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+        background: #fff;
     }
 
     .logo-circle img {
@@ -79,7 +82,7 @@ st.markdown("""
 
     .main-title {
         text-align: center;
-        font-size: 2.6rem;
+        font-size: 2.55rem;
         font-weight: 800;
         color: #14213d;
         margin-bottom: 0.2rem;
@@ -88,25 +91,49 @@ st.markdown("""
 
     .main-subtitle {
         text-align: center;
-        font-size: 1.08rem;
+        font-size: 1.02rem;
         color: #667085;
-        margin-bottom: 1.6rem;
+        margin-bottom: 1.55rem;
     }
 
     .top-divider, .section-divider {
         width: 100%;
-        height: 18px;
+        height: 16px;
         background: #ffffff;
         border: 1px solid #ececf3;
         border-radius: 999px;
-        margin: 0.8rem 0 1.35rem 0;
+        margin: 0.8rem 0 1.25rem 0;
+    }
+
+    .section-title {
+        font-size: 1.34rem;
+        font-weight: 800;
+        color: #14213d;
+        margin-bottom: 0.22rem;
+    }
+
+    .section-text {
+        color: #677185;
+        font-size: 0.96rem;
+        margin-bottom: 1rem;
     }
 
     .filter-label {
         font-size: 0.94rem;
         color: #2f3552;
-        font-weight: 600;
+        font-weight: 700;
         margin-bottom: 0.3rem;
+    }
+
+    .section-chip {
+        display: inline-block;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4938b7;
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin-bottom: 0.65rem;
     }
 
     .kpi-card {
@@ -116,12 +143,22 @@ st.markdown("""
         border-radius: 22px;
         padding: 1rem 1rem 0.95rem 1rem;
         box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
-        min-height: 205px;
-        height: 205px;
+        min-height: 180px;
+        height: 180px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         overflow: hidden;
+    }
+
+    .kpi-card.compacto {
+        min-height: 168px;
+        height: 168px;
+    }
+
+    .kpi-card.alto {
+        min-height: 208px;
+        height: 208px;
     }
 
     .kpi-card.roxo { border-left-color: #7c3aed; }
@@ -129,42 +166,112 @@ st.markdown("""
     .kpi-card.verde { border-left-color: #10b981; }
     .kpi-card.azul { border-left-color: #3b82f6; }
     .kpi-card.laranja { border-left-color: #f59e0b; }
+    .kpi-card.vermelho { border-left-color: #ef4444; }
+    .kpi-card.cinza { border-left-color: #64748b; }
 
     .kpi-title {
-        font-size: 0.98rem;
+        font-size: 0.96rem;
         font-weight: 700;
         color: #28314f;
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.78rem;
+        line-height: 1.15;
     }
 
     .kpi-value {
-        font-size: clamp(1.15rem, 1.55vw, 1.75rem);
+        font-size: clamp(1.15rem, 1.5vw, 1.7rem);
         font-weight: 800;
         color: #081b4b;
-        line-height: 1.15;
-        margin-bottom: 0.72rem;
+        line-height: 1.12;
+        margin-bottom: 0.58rem;
         white-space: nowrap;
-        word-break: keep-all;
-        overflow-wrap: normal;
         overflow: hidden;
         text-overflow: clip;
         max-width: 100%;
     }
 
+    .kpi-value.small {
+        font-size: clamp(1.05rem, 1.3vw, 1.4rem);
+    }
+
     .kpi-caption {
-        font-size: 0.92rem;
+        font-size: 0.9rem;
         color: #667085;
+        line-height: 1.4;
     }
 
-    .forecast-line {
-        font-size: 0.98rem;
-        color: #667085;
-        margin-bottom: 0.38rem;
-        line-height: 1.5;
+    .kpi-helper {
+        font-size: 0.84rem;
+        color: #8a93a5;
+        margin-top: 0.3rem;
+        line-height: 1.35;
     }
 
-    .forecast-line b {
+    .saldo-pos {
+        color: #0f9f6f !important;
+    }
+
+    .saldo-neg {
+        color: #d92d20 !important;
+    }
+
+    .alert-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fbfbff 100%);
+        border: 1px solid #ececf3;
+        border-left: 6px solid #ef4444;
+        border-radius: 22px;
+        padding: 1rem 1rem 0.95rem 1rem;
+        box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
+        margin-bottom: 1rem;
+    }
+
+    .alert-title {
+        font-size: 1.02rem;
+        font-weight: 800;
         color: #14213d;
+        margin-bottom: 0.55rem;
+    }
+
+    .alert-line {
+        font-size: 0.93rem;
+        color: #5f6b7a;
+        margin-bottom: 0.28rem;
+        line-height: 1.45;
+    }
+
+    .next-due-card {
+        background: #ffffff;
+        border: 1px solid #ececf3;
+        border-left: 6px solid #3b82f6;
+        border-radius: 22px;
+        padding: 1rem;
+        box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
+        min-height: 208px;
+        height: 208px;
+        overflow: hidden;
+    }
+
+    .next-due-main {
+        font-size: 1.42rem;
+        font-weight: 800;
+        color: #081b4b;
+        margin-bottom: 0.28rem;
+        line-height: 1.1;
+    }
+
+    .next-due-sub {
+        font-size: 0.94rem;
+        color: #667085;
+        margin-bottom: 0.6rem;
+        line-height: 1.4;
+    }
+
+    .next-due-list {
+        font-size: 0.88rem;
+        color: #5f6b7a;
+        line-height: 1.48;
+        max-height: 96px;
+        overflow-y: auto;
+        padding-right: 0.25rem;
     }
 
     .status-mini-wrap {
@@ -205,6 +312,10 @@ st.markdown("""
         border-left: 5px solid #7c3aed;
     }
 
+    .status-mini-card.vencido {
+        border-left: 5px solid #ef4444;
+    }
+
     .status-mini-title {
         font-size: 0.9rem;
         font-weight: 700;
@@ -214,7 +325,7 @@ st.markdown("""
     }
 
     .status-mini-value {
-        font-size: 1.7rem;
+        font-size: 1.68rem;
         font-weight: 800;
         color: #081b4b;
         line-height: 1.05;
@@ -231,7 +342,7 @@ st.markdown("""
         position: absolute;
         left: 0;
         top: calc(100% + 8px);
-        width: 320px;
+        width: 330px;
         max-height: 360px;
         overflow-y: auto;
         background: #ffffff;
@@ -280,19 +391,6 @@ st.markdown("""
         margin-bottom: 0.14rem;
     }
 
-    .section-title {
-        font-size: 1.38rem;
-        font-weight: 800;
-        color: #14213d;
-        margin-bottom: 0.3rem;
-    }
-
-    .section-text {
-        color: #677185;
-        font-size: 0.96rem;
-        margin-bottom: 1rem;
-    }
-
     .update-card {
         background: #ffffff;
         border: 1px solid #ececf3;
@@ -303,7 +401,7 @@ st.markdown("""
     }
 
     .item-title {
-        font-size: 1.35rem;
+        font-size: 1.25rem;
         font-weight: 800;
         color: #0b1d4d;
         margin-bottom: 0.35rem;
@@ -311,7 +409,7 @@ st.markdown("""
 
     .item-meta {
         color: #64748b;
-        font-size: 0.96rem;
+        font-size: 0.95rem;
         line-height: 1.65;
     }
 
@@ -326,7 +424,7 @@ st.markdown("""
     }
 
     .item-value {
-        font-size: 1.28rem;
+        font-size: 1.22rem;
         font-weight: 800;
         color: #081b4b;
         margin-bottom: 0.45rem;
@@ -346,13 +444,18 @@ st.markdown("""
     }
 
     .status-apagar {
-        background: #fde6e6;
-        color: #c62828;
+        background: #fff1dc;
+        color: #b45309;
     }
 
     .status-areceber {
         background: #efe3ff;
         color: #6d28d9;
+    }
+
+    .status-vencido {
+        background: #fee4e2;
+        color: #c62828;
     }
 
     .small-note {
@@ -378,6 +481,12 @@ st.markdown("""
     .stButton > button:hover {
         border-color: #7c3aed;
         color: #7c3aed;
+    }
+
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #ececf3;
+        border-radius: 18px;
+        overflow: hidden;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -459,6 +568,14 @@ def extrair_mes_label(data):
     ]
     return f"{meses[data.month - 1]}/{data.year}"
 
+def formatar_data_curta(data):
+    if pd.isna(data):
+        return "-"
+    try:
+        return pd.to_datetime(data).strftime("%d/%m/%Y")
+    except Exception:
+        return "-"
+
 def status_class(status):
     s = str(status or "").strip().lower()
     if s == "pago":
@@ -467,6 +584,8 @@ def status_class(status):
         return "status-pill status-apagar"
     if s == "a receber":
         return "status-pill status-areceber"
+    if s == "vencido":
+        return "status-pill status-vencido"
     return "status-pill"
 
 def encontrar_logo():
@@ -499,7 +618,7 @@ def render_logo():
         pass
 
 def montar_detalhes_status_html(df_base, status_nome):
-    base = df_base[df_base["_status"].str.lower() == status_nome.lower()].copy()
+    base = df_base[df_base["_status_exibicao"].str.lower() == status_nome.lower()].copy()
 
     if base.empty:
         return """
@@ -513,8 +632,9 @@ def montar_detalhes_status_html(df_base, status_nome):
     itens_html = ""
     for _, r in base.iterrows():
         nome = html.escape(str(r["_estabelecimento"]).strip() or "-")
+        data_txt = formatar_data_curta(r["_data_mes"])
         valor = formatar_brl(r["_valor_num"])
-        itens_html += f'<div class="status-hover-item">• {nome}: {valor}</div>'
+        itens_html += f'<div class="status-hover-item">• {nome} | {data_txt} | {valor}</div>'
 
     html_final = f"""
     <div class="status-hover-title">{html.escape(status_nome)}</div>
@@ -524,10 +644,15 @@ def montar_detalhes_status_html(df_base, status_nome):
     {itens_html}
     """
 
-    html_final = html_final.replace("&lt;/div&gt;", "")
-    html_final = html_final.replace("</div></div>", "</div>")
-
     return html_final.strip()
+
+def cor_saldo(valor):
+    return "saldo-pos" if valor >= 0 else "saldo-neg"
+
+def texto_plural(qtd, singular, plural=None):
+    if plural is None:
+        plural = singular + "s"
+    return singular if qtd == 1 else plural
 
 # =========================================================
 # GOOGLE SHEETS
@@ -588,10 +713,12 @@ def carregar():
     df["_whatsapp"] = df[col_whatsapp].astype(str).str.strip() if col_whatsapp else ""
 
     df["_sheet_row"] = range(2, len(df) + 2)
+    df["_data_ref"] = pd.to_datetime(df["_data_mes"], errors="coerce").dt.date
 
     meta = {
         "status_col_name": col_status,
         "valor_col_name": col_valor,
+        "mes_col_name": col_mes,
     }
     return df, meta
 
@@ -614,9 +741,10 @@ def atualizar_status(sheet_row, novo_status):
     st.cache_data.clear()
 
 def atualizar_valor(sheet_row, novo_valor):
-    valor_num = parse_brl(novo_valor)
     if novo_valor is None or str(novo_valor).strip() == "":
         raise ValueError("Digite um valor antes de salvar.")
+
+    valor_num = parse_brl(novo_valor)
 
     client = conectar()
     ws = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
@@ -647,7 +775,7 @@ render_logo()
 
 st.markdown('<div class="main-title">Gestão Financeira Oppi</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="main-subtitle">Gestão financeira de receitas, despesas e status de pagamento</div>',
+    '<div class="main-subtitle">Painel financeiro com visão de realizado, projetado, vencimentos, previsões e atualização direta na planilha</div>',
     unsafe_allow_html=True
 )
 st.markdown('<div class="top-divider"></div>', unsafe_allow_html=True)
@@ -673,6 +801,26 @@ if not meta.get("status_col_name"):
 if not meta.get("valor_col_name"):
     st.error("A coluna 'Valor' não foi encontrada na planilha. Confira o cabeçalho.")
     st.stop()
+
+# =========================================================
+# PRÉ-PROCESSAMENTO
+# =========================================================
+hoje = datetime.now(TZ).date()
+amanha = hoje + timedelta(days=1)
+fim_7_dias = hoje + timedelta(days=7)
+
+df["_entrada_norm"] = df["_entrada"].astype(str).str.strip().str.lower()
+df["_status_norm"] = df["_status"].astype(str).str.strip().str.lower()
+df["_categoria_norm"] = df["_categoria"].astype(str).str.strip()
+
+# status para exibição gerencial
+df["_status_exibicao"] = df["_status"]
+mask_vencido = (
+    (df["_status_norm"] == "a pagar") &
+    (df["_data_ref"].notna()) &
+    (df["_data_ref"] < hoje)
+)
+df.loc[mask_vencido, "_status_exibicao"] = "Vencido"
 
 # =========================================================
 # FILTROS
@@ -718,191 +866,442 @@ if filtro_entrada != "Todas":
     df_filtrado = df_filtrado[df_filtrado["_entrada"] == filtro_entrada]
 
 # =========================================================
-# KPIs
+# KPIs - RESUMO DO MÊS
 # =========================================================
 total_registros = len(df_filtrado)
 
-total_receitas = df_filtrado.loc[
-    df_filtrado["_entrada"].str.lower() == "receita", "_valor_num"
+qtd_receitas = int((df_filtrado["_entrada_norm"] == "receita").sum())
+qtd_despesas = int((df_filtrado["_entrada_norm"] == "despesa").sum())
+
+total_receitas = df_filtrado.loc[df_filtrado["_entrada_norm"] == "receita", "_valor_num"].sum()
+total_despesas = df_filtrado.loc[df_filtrado["_entrada_norm"] == "despesa", "_valor_num"].sum()
+
+resultado_mes = total_receitas - total_despesas
+margem_mes = (resultado_mes / total_receitas * 100) if total_receitas > 0 else 0.0
+
+ticket_medio_receita = (
+    total_receitas / qtd_receitas if qtd_receitas > 0 else 0.0
+)
+ticket_medio_despesa = (
+    total_despesas / qtd_despesas if qtd_despesas > 0 else 0.0
+)
+
+maior_despesa = df_filtrado.loc[df_filtrado["_entrada_norm"] == "despesa", "_valor_num"].max() if qtd_despesas > 0 else 0.0
+
+base_cat_desp = (
+    df_filtrado[df_filtrado["_entrada_norm"] == "despesa"]
+    .groupby("_categoria", dropna=False)["_valor_num"]
+    .sum()
+    .reset_index()
+    .sort_values("Valor" if "Valor" in [] else "_valor_num", ascending=False)
+)
+
+if not base_cat_desp.empty:
+    maior_categoria_nome = str(base_cat_desp.iloc[0]["_categoria"]).strip() or "Sem categoria"
+    maior_categoria_valor = float(base_cat_desp.iloc[0]["_valor_num"])
+else:
+    maior_categoria_nome = "-"
+    maior_categoria_valor = 0.0
+
+# =========================================================
+# KPIs - REALIZADO / PROJETADO / STATUS
+# =========================================================
+despesa_paga = df_filtrado.loc[
+    (df_filtrado["_entrada_norm"] == "despesa") & (df_filtrado["_status_norm"] == "pago"),
+    "_valor_num"
 ].sum()
 
-total_despesas = df_filtrado.loc[
-    df_filtrado["_entrada"].str.lower() == "despesa", "_valor_num"
+receita_recebida = df_filtrado.loc[
+    (df_filtrado["_entrada_norm"] == "receita") & (df_filtrado["_status_norm"] == "pago"),
+    "_valor_num"
 ].sum()
 
-saldo = total_receitas - total_despesas
+saldo_realizado = receita_recebida - despesa_paga
 
-total_apagar = df_filtrado.loc[
-    df_filtrado["_status"].str.lower() == "a pagar", "_valor_num"
+total_pago = df_filtrado.loc[df_filtrado["_status_norm"] == "pago", "_valor_num"].sum()
+total_apagar = df_filtrado.loc[df_filtrado["_status_norm"] == "a pagar", "_valor_num"].sum()
+total_areceber = df_filtrado.loc[df_filtrado["_status_norm"] == "a receber", "_valor_num"].sum()
+
+total_vencido = df_filtrado.loc[
+    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_data_ref"].notna()) &
+    (df_filtrado["_data_ref"] < hoje),
+    "_valor_num"
 ].sum()
 
-total_areceber = df_filtrado.loc[
-    df_filtrado["_status"].str.lower() == "a receber", "_valor_num"
-].sum()
+qtd_pago = int((df_filtrado["_status_norm"] == "pago").sum())
+qtd_apagar = int((df_filtrado["_status_norm"] == "a pagar").sum())
+qtd_areceber = int((df_filtrado["_status_norm"] == "a receber").sum())
+qtd_vencido = int((
+    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_data_ref"].notna()) &
+    (df_filtrado["_data_ref"] < hoje)
+).sum())
 
-total_pago = df_filtrado.loc[
-    df_filtrado["_status"].str.lower() == "pago", "_valor_num"
-].sum()
+saldo_projetado_mes = saldo_realizado + total_areceber - total_apagar
 
 # =========================================================
 # PREVISÕES
 # Hoje = hoje
 # Próximos 7 dias = amanhã até +7 dias
 # =========================================================
-hoje = datetime.now(ZoneInfo("America/Sao_Paulo")).date()
-amanha = hoje + timedelta(days=1)
-fim_7_dias = hoje + timedelta(days=7)
-
 df_prev = df_filtrado.copy()
-df_prev = df_prev[df_prev["_data_mes"].notna()].copy()
-df_prev["_data_ref"] = pd.to_datetime(df_prev["_data_mes"]).dt.date
+df_prev = df_prev[df_prev["_data_ref"].notna()].copy()
 
 ganhos_hoje = df_prev.loc[
-    (df_prev["_entrada"].str.lower() == "receita") &
+    (df_prev["_entrada_norm"] == "receita") &
     (df_prev["_data_ref"] == hoje),
     "_valor_num"
 ].sum()
 
 despesas_hoje = df_prev.loc[
-    (df_prev["_entrada"].str.lower() == "despesa") &
+    (df_prev["_entrada_norm"] == "despesa") &
     (df_prev["_data_ref"] == hoje),
     "_valor_num"
 ].sum()
 
+saldo_prev_hoje = ganhos_hoje - despesas_hoje
+
 ganhos_7_dias = df_prev.loc[
-    (df_prev["_entrada"].str.lower() == "receita") &
+    (df_prev["_entrada_norm"] == "receita") &
     (df_prev["_data_ref"] >= amanha) &
     (df_prev["_data_ref"] <= fim_7_dias),
     "_valor_num"
 ].sum()
 
 despesas_7_dias = df_prev.loc[
-    (df_prev["_entrada"].str.lower() == "despesa") &
+    (df_prev["_entrada_norm"] == "despesa") &
     (df_prev["_data_ref"] >= amanha) &
     (df_prev["_data_ref"] <= fim_7_dias),
     "_valor_num"
 ].sum()
 
-c1, c2, c3, c4, c5, c6 = st.columns(6)
+saldo_prev_7_dias = ganhos_7_dias - despesas_7_dias
 
-cards = [
-    (c1, "Registros", str(total_registros), "total de lançamentos filtrados", "roxo"),
-    (c2, "Receitas", formatar_brl(total_receitas), "soma das receitas", "verde"),
-    (c3, "Despesas", formatar_brl(total_despesas), "soma das despesas", "rosa"),
-    (c4, "Saldo", formatar_brl(saldo), "receitas menos despesas", "azul"),
-    (c5, "A pagar", formatar_brl(total_apagar), "somatório do status A Pagar", "laranja"),
-    (c6, "A receber", formatar_brl(total_areceber), "somatório do status A Receber", "roxo"),
-]
+# Próximo vencimento
+base_prox_venc = df_filtrado[
+    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_data_ref"].notna()) &
+    (df_filtrado["_data_ref"] >= hoje)
+].copy().sort_values("_data_ref", ascending=True)
 
-for col, titulo, valor, legenda, cor in cards:
-    with col:
-        st.markdown(
-            f"""
-            <div class="kpi-card {cor}">
-                <div class="kpi-title">{titulo}</div>
-                <div class="kpi-value">{valor}</div>
-                <div class="kpi-caption">{legenda}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+if not base_prox_venc.empty:
+    prox = base_prox_venc.iloc[0]
+    prox_data = formatar_data_curta(prox["_data_mes"])
+    prox_estabelecimento = str(prox["_estabelecimento"]).strip() or "-"
+    prox_valor = formatar_brl(prox["_valor_num"])
+else:
+    prox_data = "-"
+    prox_estabelecimento = "Sem contas futuras"
+    prox_valor = "R$ 0,00"
 
-st.markdown("<br>", unsafe_allow_html=True)
+top5_vencer = base_prox_venc.head(5).copy()
 
 # =========================================================
-# PAGO + 3 QUADRADINHOS
+# ALERTAS INTELIGENTES
 # =========================================================
-qtd_pago = int((df_filtrado["_status"].str.lower() == "pago").sum())
-qtd_apagar = int((df_filtrado["_status"].str.lower() == "a pagar").sum())
-qtd_areceber = int((df_filtrado["_status"].str.lower() == "a receber").sum())
+contas_hoje_df = df_filtrado[
+    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_data_ref"] == hoje)
+].copy()
 
-hover_pago = montar_detalhes_status_html(df_filtrado, "Pago")
-hover_apagar = montar_detalhes_status_html(df_filtrado, "A Pagar")
-hover_areceber = montar_detalhes_status_html(df_filtrado, "A Receber")
+contas_amanha_df = df_filtrado[
+    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_data_ref"] == amanha)
+].copy()
 
-c7, c8 = st.columns([1.1, 1])
+receb_atrasado_df = df_filtrado[
+    (df_filtrado["_status_norm"] == "a receber") &
+    (df_filtrado["_data_ref"].notna()) &
+    (df_filtrado["_data_ref"] < hoje)
+].copy()
 
-with c7:
+qtd_contas_hoje = len(contas_hoje_df)
+valor_contas_hoje = contas_hoje_df["_valor_num"].sum()
+
+qtd_contas_amanha = len(contas_amanha_df)
+valor_contas_amanha = contas_amanha_df["_valor_num"].sum()
+
+qtd_receb_atrasado = len(receb_atrasado_df)
+valor_receb_atrasado = receb_atrasado_df["_valor_num"].sum()
+
+categoria_alerta_txt = ""
+if total_despesas > 0 and maior_categoria_valor > 0:
+    perc_maior_cat = (maior_categoria_valor / total_despesas) * 100
+    if perc_maior_cat >= 25:
+        categoria_alerta_txt = (
+            f'Categoria "{maior_categoria_nome}" já representa '
+            f'{perc_maior_cat:.1f}% das despesas.'
+        ).replace(".", ",")
+
+alertas = []
+if qtd_contas_hoje > 0:
+    alertas.append(
+        f"Hoje vencem {qtd_contas_hoje} {texto_plural(qtd_contas_hoje, 'conta')} somando {formatar_brl(valor_contas_hoje)}."
+    )
+if qtd_contas_amanha > 0:
+    alertas.append(
+        f"Amanhã vencem {qtd_contas_amanha} {texto_plural(qtd_contas_amanha, 'conta')} somando {formatar_brl(valor_contas_amanha)}."
+    )
+if total_vencido > 0:
+    alertas.append(f"Você tem {formatar_brl(total_vencido)} em despesas vencidas.")
+if valor_receb_atrasado > 0:
+    alertas.append(f"Há {formatar_brl(valor_receb_atrasado)} em recebimentos atrasados.")
+if total_despesas > total_receitas and total_receitas > 0:
+    alertas.append("As despesas já ultrapassaram as receitas no período filtrado.")
+if categoria_alerta_txt:
+    alertas.append(categoria_alerta_txt)
+
+# =========================================================
+# LINHA 1 — RESUMO DO MÊS
+# =========================================================
+st.markdown('<div class="section-chip">Resumo do período</div>', unsafe_allow_html=True)
+r1, r2, r3, r4, r5 = st.columns(5)
+
+with r1:
     st.markdown(
         f"""
-        <div class="kpi-card verde">
-            <div class="kpi-title">Pago</div>
-            <div class="kpi-value">{formatar_brl(total_pago)}</div>
-            <div class="kpi-caption">somatório do status Pago</div>
+        <div class="kpi-card roxo compacto">
+            <div class="kpi-title">Registros</div>
+            <div class="kpi-value">{total_registros}</div>
+            <div class="kpi-caption">{qtd_receitas} receitas • {qtd_despesas} despesas</div>
+            <div class="kpi-helper">Total de lançamentos no filtro atual</div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-with c8:
-    m1, m2, m3 = st.columns(3)
+with r2:
+    st.markdown(
+        f"""
+        <div class="kpi-card verde compacto">
+            <div class="kpi-title">Receitas</div>
+            <div class="kpi-value">{formatar_brl(total_receitas)}</div>
+            <div class="kpi-caption">Ticket médio: {formatar_brl(ticket_medio_receita)}</div>
+            <div class="kpi-helper">Total de entradas registradas</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with m1:
-        st.markdown(
-            f"""
-            <div class="status-mini-wrap">
-                <div class="status-mini-card pago">
-                    <div class="status-mini-title">Pago</div>
-                    <div class="status-mini-value">{qtd_pago}</div>
-                    <div class="status-mini-caption">Passe o mouse</div>
-                </div>
-                <div class="status-hover-box">
-                    {hover_pago}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+with r3:
+    st.markdown(
+        f"""
+        <div class="kpi-card rosa compacto">
+            <div class="kpi-title">Despesas</div>
+            <div class="kpi-value">{formatar_brl(total_despesas)}</div>
+            <div class="kpi-caption">Ticket médio: {formatar_brl(ticket_medio_despesa)}</div>
+            <div class="kpi-helper">Total de saídas registradas</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with m2:
-        st.markdown(
-            f"""
-            <div class="status-mini-wrap">
-                <div class="status-mini-card apagar">
-                    <div class="status-mini-title">A Pagar</div>
-                    <div class="status-mini-value">{qtd_apagar}</div>
-                    <div class="status-mini-caption">Passe o mouse</div>
-                </div>
-                <div class="status-hover-box">
-                    {hover_apagar}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+with r4:
+    st.markdown(
+        f"""
+        <div class="kpi-card {'verde' if resultado_mes >= 0 else 'vermelho'} compacto">
+            <div class="kpi-title">Saldo</div>
+            <div class="kpi-value {cor_saldo(resultado_mes)}">{formatar_brl(resultado_mes)}</div>
+            <div class="kpi-caption">Resultado do período</div>
+            <div class="kpi-helper">Receitas menos despesas</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    with m3:
-        st.markdown(
-            f"""
-            <div class="status-mini-wrap">
-                <div class="status-mini-card areceber">
-                    <div class="status-mini-title">A Receber</div>
-                    <div class="status-mini-value">{qtd_areceber}</div>
-                    <div class="status-mini-caption">Passe o mouse</div>
-                </div>
-                <div class="status-hover-box">
-                    {hover_areceber}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+with r5:
+    st.markdown(
+        f"""
+        <div class="kpi-card azul compacto">
+            <div class="kpi-title">Margem %</div>
+            <div class="kpi-value {'saldo-pos' if margem_mes >= 0 else 'saldo-neg'}">{str(round(margem_mes, 1)).replace('.', ',')}%</div>
+            <div class="kpi-caption">Saúde do período</div>
+            <div class="kpi-helper">Resultado ÷ receitas</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # =========================================================
-# PREVISÕES
+# ALERTAS
+# =========================================================
+st.markdown("<br>", unsafe_allow_html=True)
+
+st.markdown(
+    f"""
+    <div class="alert-card">
+        <div class="alert-title">⚠️ Alertas inteligentes</div>
+        {"".join([f'<div class="alert-line">• {html.escape(a)}</div>' for a in alertas]) if alertas else '<div class="alert-line">Nenhum alerta crítico encontrado no filtro atual.</div>'}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# =========================================================
+# LINHA 2 — SITUAÇÃO FINANCEIRA
+# =========================================================
+hover_pago = montar_detalhes_status_html(df_filtrado, "Pago")
+hover_apagar = montar_detalhes_status_html(df_filtrado, "A Pagar")
+hover_areceber = montar_detalhes_status_html(df_filtrado, "A Receber")
+hover_vencido = montar_detalhes_status_html(df_filtrado, "Vencido")
+
+st.markdown('<div class="section-chip">Situação financeira</div>', unsafe_allow_html=True)
+s1, s2, s3, s4, s5 = st.columns(5)
+
+with s1:
+    st.markdown(
+        f"""
+        <div class="kpi-card verde compacto">
+            <div class="kpi-title">Total já pago</div>
+            <div class="kpi-value">{formatar_brl(total_pago)}</div>
+            <div class="kpi-caption">Valor efetivamente realizado</div>
+            <div class="kpi-helper">Inclui receitas e despesas com status Pago</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with s2:
+    st.markdown(
+        f"""
+        <div class="kpi-card laranja compacto">
+            <div class="kpi-title">Total em aberto para pagar</div>
+            <div class="kpi-value">{formatar_brl(total_apagar)}</div>
+            <div class="kpi-caption">{qtd_apagar} lançamentos</div>
+            <div class="kpi-helper">Despesas ainda pendentes</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with s3:
+    st.markdown(
+        f"""
+        <div class="kpi-card roxo compacto">
+            <div class="kpi-title">Total a receber</div>
+            <div class="kpi-value">{formatar_brl(total_areceber)}</div>
+            <div class="kpi-caption">{qtd_areceber} lançamentos</div>
+            <div class="kpi-helper">Receitas ainda previstas</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with s4:
+    st.markdown(
+        f"""
+        <div class="kpi-card vermelho compacto">
+            <div class="kpi-title">Vencido</div>
+            <div class="kpi-value">{formatar_brl(total_vencido)}</div>
+            <div class="kpi-caption">{qtd_vencido} lançamentos atrasados</div>
+            <div class="kpi-helper">A pagar com data anterior a hoje</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with s5:
+    st.markdown(
+        f"""
+        <div class="kpi-card {'verde' if saldo_projetado_mes >= 0 else 'vermelho'} compacto">
+            <div class="kpi-title">Saldo projetado</div>
+            <div class="kpi-value {cor_saldo(saldo_projetado_mes)}">{formatar_brl(saldo_projetado_mes)}</div>
+            <div class="kpi-caption">Saldo atual + receber - pagar</div>
+            <div class="kpi-helper">Visão projetada do período filtrado</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+mini1, mini2, mini3, mini4 = st.columns(4)
+
+with mini1:
+    st.markdown(
+        f"""
+        <div class="status-mini-wrap">
+            <div class="status-mini-card pago">
+                <div class="status-mini-title">Pago</div>
+                <div class="status-mini-value">{qtd_pago}</div>
+                <div class="status-mini-caption">Passe o mouse</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_pago}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with mini2:
+    st.markdown(
+        f"""
+        <div class="status-mini-wrap">
+            <div class="status-mini-card apagar">
+                <div class="status-mini-title">A Pagar</div>
+                <div class="status-mini-value">{qtd_apagar}</div>
+                <div class="status-mini-caption">Passe o mouse</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_apagar}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with mini3:
+    st.markdown(
+        f"""
+        <div class="status-mini-wrap">
+            <div class="status-mini-card areceber">
+                <div class="status-mini-title">A Receber</div>
+                <div class="status-mini-value">{qtd_areceber}</div>
+                <div class="status-mini-caption">Passe o mouse</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_areceber}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with mini4:
+    st.markdown(
+        f"""
+        <div class="status-mini-wrap">
+            <div class="status-mini-card vencido">
+                <div class="status-mini-title">Vencido</div>
+                <div class="status-mini-value">{qtd_vencido}</div>
+                <div class="status-mini-caption">Passe o mouse</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_vencido}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# =========================================================
+# LINHA 3 — REALIZADO / PROJETADO / PREVISÕES
 # =========================================================
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-chip">Realizado e previsões</div>', unsafe_allow_html=True)
 
-p1, p2 = st.columns(2)
+p1, p2, p3, p4, p5 = st.columns(5)
 
 with p1:
     st.markdown(
         f"""
-        <div class="kpi-card verde">
-            <div class="kpi-title">Previsões no dia</div>
-            <div class="forecast-line"><b>Ganhos:</b> {formatar_brl(ganhos_hoje)}</div>
-            <div class="forecast-line"><b>Despesas:</b> {formatar_brl(despesas_hoje)}</div>
-            <div class="kpi-caption">baseado nas datas de hoje da planilha</div>
+        <div class="kpi-card azul alto">
+            <div class="kpi-title">Receita recebida</div>
+            <div class="kpi-value">{formatar_brl(receita_recebida)}</div>
+            <div class="kpi-caption">Entradas já realizadas</div>
+            <div class="kpi-helper">Somente receitas com status Pago</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -911,11 +1310,98 @@ with p1:
 with p2:
     st.markdown(
         f"""
-        <div class="kpi-card rosa">
-            <div class="kpi-title">Previsões dos próximos 7 dias</div>
-            <div class="forecast-line"><b>Ganhos:</b> {formatar_brl(ganhos_7_dias)}</div>
-            <div class="forecast-line"><b>Despesas:</b> {formatar_brl(despesas_7_dias)}</div>
-            <div class="kpi-caption">baseado nas datas futuras da planilha</div>
+        <div class="kpi-card rosa alto">
+            <div class="kpi-title">Despesa paga</div>
+            <div class="kpi-value">{formatar_brl(despesa_paga)}</div>
+            <div class="kpi-caption">Saídas já realizadas</div>
+            <div class="kpi-helper">Somente despesas com status Pago</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with p3:
+    st.markdown(
+        f"""
+        <div class="kpi-card {'verde' if saldo_realizado >= 0 else 'vermelho'} alto">
+            <div class="kpi-title">Saldo realizado</div>
+            <div class="kpi-value {cor_saldo(saldo_realizado)}">{formatar_brl(saldo_realizado)}</div>
+            <div class="kpi-caption">O que já entrou menos o que já saiu</div>
+            <div class="kpi-helper">Visão real do caixa realizado</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with p4:
+    st.markdown(
+        f"""
+        <div class="kpi-card verde alto">
+            <div class="kpi-title">Hoje</div>
+            <div class="kpi-caption">Entradas previstas: {formatar_brl(ganhos_hoje)}</div>
+            <div class="kpi-caption">Saídas previstas: {formatar_brl(despesas_hoje)}</div>
+            <div class="kpi-value small {cor_saldo(saldo_prev_hoje)}">Saldo: {formatar_brl(saldo_prev_hoje)}</div>
+            <div class="kpi-helper">Baseado nas datas de hoje</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with p5:
+    st.markdown(
+        f"""
+        <div class="kpi-card laranja alto">
+            <div class="kpi-title">Próximos 7 dias</div>
+            <div class="kpi-caption">Entradas previstas: {formatar_brl(ganhos_7_dias)}</div>
+            <div class="kpi-caption">Saídas previstas: {formatar_brl(despesas_7_dias)}</div>
+            <div class="kpi-value small {cor_saldo(saldo_prev_7_dias)}">Saldo: {formatar_brl(saldo_prev_7_dias)}</div>
+            <div class="kpi-helper">De amanhã até +7 dias</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+nv1, nv2 = st.columns([1.25, 1])
+
+with nv1:
+    top5_html = ""
+    if top5_vencer.empty:
+        top5_html = '<div class="next-due-list">Nenhuma conta futura encontrada.</div>'
+    else:
+        linhas = []
+        for _, row in top5_vencer.iterrows():
+            dt = formatar_data_curta(row["_data_mes"])
+            est = html.escape(str(row["_estabelecimento"]).strip() or "-")
+            val = formatar_brl(row["_valor_num"])
+            linhas.append(f"• {dt} — {est} — {val}")
+        top5_html = f'<div class="next-due-list">{"<br>".join(linhas)}</div>'
+
+    st.markdown(
+        f"""
+        <div class="next-due-card">
+            <div class="kpi-title">Próximo vencimento</div>
+            <div class="next-due-main">{prox_data}</div>
+            <div class="next-due-sub">{html.escape(prox_estabelecimento)} • {prox_valor}</div>
+            <div class="kpi-helper" style="margin-bottom:0.35rem;">Top 5 contas a vencer</div>
+            {top5_html}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with nv2:
+    st.markdown(
+        f"""
+        <div class="next-due-card" style="border-left-color:#7c3aed;">
+            <div class="kpi-title">Indicadores de gestão</div>
+            <div class="kpi-caption">Maior despesa: <b>{formatar_brl(maior_despesa)}</b></div>
+            <div class="kpi-caption">Maior categoria: <b>{html.escape(maior_categoria_nome)}</b></div>
+            <div class="kpi-caption">Valor da categoria líder: <b>{formatar_brl(maior_categoria_valor)}</b></div>
+            <div class="kpi-caption">Recebimentos atrasados: <b>{formatar_brl(valor_receb_atrasado)}</b></div>
+            <div class="kpi-caption">Total previsto a entrar: <b>{formatar_brl(total_areceber)}</b></div>
+            <div class="kpi-helper">Leitura rápida para decisão</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -925,15 +1411,16 @@ with p2:
 # GRÁFICOS
 # =========================================================
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-chip">Visualização gráfica</div>', unsafe_allow_html=True)
 
 g1, g2 = st.columns(2)
 
 with g1:
-    st.markdown('<div class="section-title">📊 Valor por categoria</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-text">Soma das despesas agrupadas por categoria.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📊 Despesas por categoria</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-text">Barras horizontais facilitam a leitura das maiores categorias de gasto.</div>', unsafe_allow_html=True)
 
     base_categoria = (
-        df_filtrado[df_filtrado["_entrada"].str.lower() == "despesa"]
+        df_filtrado[df_filtrado["_entrada_norm"] == "despesa"]
         .groupby("_categoria", dropna=False)["_valor_num"]
         .sum()
         .reset_index()
@@ -942,60 +1429,266 @@ with g1:
     base_categoria = base_categoria[base_categoria["Categoria"].astype(str).str.strip() != ""]
 
     if not base_categoria.empty:
+        base_categoria = base_categoria.sort_values("Valor", ascending=True)
         fig_cat = px.bar(
-            base_categoria.sort_values("Valor", ascending=False),
-            x="Categoria",
-            y="Valor",
+            base_categoria,
+            x="Valor",
+            y="Categoria",
+            orientation="h",
             text="Valor"
         )
-        fig_cat.update_traces(texttemplate="R$ %{y:,.2f}", textposition="outside")
+        fig_cat.update_traces(texttemplate="R$ %{x:,.2f}", textposition="outside")
         fig_cat.update_layout(
-            height=420,
+            height=450,
             showlegend=False,
             plot_bgcolor="white",
             paper_bgcolor="white",
             margin=dict(l=20, r=20, t=20, b=20),
-            xaxis_title="",
-            yaxis_title="Valor"
+            xaxis_title="Valor",
+            yaxis_title=""
         )
-        fig_cat.update_yaxes(tickprefix="R$ ")
+        fig_cat.update_xaxes(tickprefix="R$ ")
         st.plotly_chart(fig_cat, use_container_width=True)
     else:
         st.info("Sem dados de despesas para o gráfico de categoria.")
 
 with g2:
-    st.markdown('<div class="section-title">💰 Valor por status</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-text">Distribuição financeira por status atual.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🍩 Distribuição por status</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-text">Veja a distribuição financeira por valor ou por quantidade.</div>', unsafe_allow_html=True)
 
-    base_status = (
-        df_filtrado.groupby("_status", dropna=False)["_valor_num"]
-        .sum()
-        .reset_index()
-        .rename(columns={"_status": "Status", "_valor_num": "Valor"})
+    modo_status = st.radio(
+        "Modo de exibição do status",
+        ["Por valor", "Por quantidade"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="modo_status_grafico"
     )
-    base_status = base_status[base_status["Status"].astype(str).str.strip() != ""]
 
-    if not base_status.empty:
-        fig_status = px.pie(
-            base_status,
-            names="Status",
-            values="Valor",
-            hole=0.62
+    if modo_status == "Por valor":
+        base_status = (
+            df_filtrado.groupby("_status_exibicao", dropna=False)["_valor_num"]
+            .sum()
+            .reset_index()
+            .rename(columns={"_status_exibicao": "Status", "_valor_num": "Valor"})
         )
-        fig_status.update_traces(
-            textinfo="label+value",
-            texttemplate="%{label}<br>R$ %{value:,.2f}"
+        base_status = base_status[base_status["Status"].astype(str).str.strip() != ""]
+        if not base_status.empty:
+            fig_status = px.pie(
+                base_status,
+                names="Status",
+                values="Valor",
+                hole=0.62
+            )
+            fig_status.update_traces(
+                textinfo="label+value",
+                texttemplate="%{label}<br>R$ %{value:,.2f}"
+            )
+            fig_status.update_layout(
+                height=450,
+                plot_bgcolor="white",
+                paper_bgcolor="white",
+                margin=dict(l=20, r=20, t=20, b=20),
+                legend_title=""
+            )
+            st.plotly_chart(fig_status, use_container_width=True)
+        else:
+            st.info("Sem dados para o gráfico de status.")
+    else:
+        base_status_qtd = (
+            df_filtrado.groupby("_status_exibicao", dropna=False)
+            .size()
+            .reset_index(name="Quantidade")
+            .rename(columns={"_status_exibicao": "Status"})
         )
-        fig_status.update_layout(
-            height=420,
+        base_status_qtd = base_status_qtd[base_status_qtd["Status"].astype(str).str.strip() != ""]
+        if not base_status_qtd.empty:
+            fig_status_qtd = px.pie(
+                base_status_qtd,
+                names="Status",
+                values="Quantidade",
+                hole=0.62
+            )
+            fig_status_qtd.update_traces(
+                textinfo="label+value",
+                texttemplate="%{label}<br>%{value}"
+            )
+            fig_status_qtd.update_layout(
+                height=450,
+                plot_bgcolor="white",
+                paper_bgcolor="white",
+                margin=dict(l=20, r=20, t=20, b=20),
+                legend_title=""
+            )
+            st.plotly_chart(fig_status_qtd, use_container_width=True)
+        else:
+            st.info("Sem dados para o gráfico de status.")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+g3, g4 = st.columns(2)
+
+with g3:
+    st.markdown('<div class="section-title">📈 Fluxo por dia</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-text">Entradas e saídas por data para acompanhar o comportamento do período.</div>', unsafe_allow_html=True)
+
+    base_fluxo = df_filtrado[df_filtrado["_data_mes"].notna()].copy()
+    if not base_fluxo.empty:
+        base_fluxo["Data"] = pd.to_datetime(base_fluxo["_data_mes"]).dt.strftime("%d/%m/%Y")
+        base_fluxo["Tipo"] = base_fluxo["_entrada"].replace("", "Sem tipo")
+        base_fluxo_fluxo = (
+            base_fluxo.groupby(["Data", "Tipo"], dropna=False)["_valor_num"]
+            .sum()
+            .reset_index()
+            .rename(columns={"_valor_num": "Valor"})
+        )
+
+        fig_fluxo = px.bar(
+            base_fluxo_fluxo,
+            x="Data",
+            y="Valor",
+            color="Tipo",
+            barmode="group"
+        )
+        fig_fluxo.update_layout(
+            height=430,
             plot_bgcolor="white",
             paper_bgcolor="white",
             margin=dict(l=20, r=20, t=20, b=20),
+            xaxis_title="",
+            yaxis_title="Valor",
             legend_title=""
         )
-        st.plotly_chart(fig_status, use_container_width=True)
+        fig_fluxo.update_yaxes(tickprefix="R$ ")
+        st.plotly_chart(fig_fluxo, use_container_width=True)
     else:
-        st.info("Sem dados para o gráfico de status.")
+        st.info("Sem datas válidas para montar o fluxo diário.")
+
+with g4:
+    st.markdown('<div class="section-title">🏆 Top 10 maiores despesas</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-text">As maiores saídas do período para identificar os pesos do caixa.</div>', unsafe_allow_html=True)
+
+    base_top_desp = df_filtrado[df_filtrado["_entrada_norm"] == "despesa"].copy()
+    if not base_top_desp.empty:
+        base_top_desp["Label"] = base_top_desp["_estabelecimento"].replace("", "-")
+        base_top_desp = (
+            base_top_desp.sort_values("_valor_num", ascending=False)
+            .head(10)
+            .copy()
+        )
+        base_top_desp = base_top_desp.sort_values("_valor_num", ascending=True)
+        fig_top = px.bar(
+            base_top_desp,
+            x="_valor_num",
+            y="Label",
+            orientation="h",
+            text="_valor_num"
+        )
+        fig_top.update_traces(texttemplate="R$ %{x:,.2f}", textposition="outside")
+        fig_top.update_layout(
+            height=430,
+            showlegend=False,
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            margin=dict(l=20, r=20, t=20, b=20),
+            xaxis_title="Valor",
+            yaxis_title=""
+        )
+        fig_top.update_xaxes(tickprefix="R$ ")
+        st.plotly_chart(fig_top, use_container_width=True)
+    else:
+        st.info("Sem despesas para montar o Top 10.")
+
+# =========================================================
+# TABELA DETALHADA
+# =========================================================
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">📋 Lançamentos detalhados</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="section-text">Use os filtros rápidos para ver somente vencidos, a pagar, a receber, hoje, esta semana ou o período completo.</div>',
+    unsafe_allow_html=True
+)
+
+t1, t2 = st.columns([1.1, 2.2])
+
+with t1:
+    filtro_rapido = st.selectbox(
+        "Filtro rápido",
+        [
+            "Todos",
+            "Só vencidos",
+            "Só a pagar",
+            "Só a receber",
+            "Hoje",
+            "Próximos 7 dias",
+            "Este mês"
+        ]
+    )
+
+with t2:
+    busca_tabela = st.text_input(
+        "Buscar na tabela",
+        placeholder="Ex.: fornecedor, categoria, whatsapp, observação..."
+    )
+
+df_tabela = df_filtrado.copy()
+
+if filtro_rapido == "Só vencidos":
+    df_tabela = df_tabela[
+        (df_tabela["_status_norm"] == "a pagar") &
+        (df_tabela["_data_ref"].notna()) &
+        (df_tabela["_data_ref"] < hoje)
+    ]
+elif filtro_rapido == "Só a pagar":
+    df_tabela = df_tabela[df_tabela["_status_norm"] == "a pagar"]
+elif filtro_rapido == "Só a receber":
+    df_tabela = df_tabela[df_tabela["_status_norm"] == "a receber"]
+elif filtro_rapido == "Hoje":
+    df_tabela = df_tabela[df_tabela["_data_ref"] == hoje]
+elif filtro_rapido == "Próximos 7 dias":
+    df_tabela = df_tabela[
+        (df_tabela["_data_ref"].notna()) &
+        (df_tabela["_data_ref"] >= hoje) &
+        (df_tabela["_data_ref"] <= fim_7_dias)
+    ]
+elif filtro_rapido == "Este mês":
+    df_tabela = df_tabela[
+        (df_tabela["_data_mes"].notna()) &
+        (pd.to_datetime(df_tabela["_data_mes"]).dt.month == hoje.month) &
+        (pd.to_datetime(df_tabela["_data_mes"]).dt.year == hoje.year)
+    ]
+
+if busca_tabela.strip():
+    termo = busca_tabela.strip().lower()
+    mask = (
+        df_tabela["_estabelecimento"].astype(str).str.lower().str.contains(termo, na=False) |
+        df_tabela["_categoria"].astype(str).str.lower().str.contains(termo, na=False) |
+        df_tabela["_entrada"].astype(str).str.lower().str.contains(termo, na=False) |
+        df_tabela["_status_exibicao"].astype(str).str.lower().str.contains(termo, na=False) |
+        df_tabela["_detalhes"].astype(str).str.lower().str.contains(termo, na=False) |
+        df_tabela["_whatsapp"].astype(str).str.lower().str.contains(termo, na=False)
+    )
+    df_tabela = df_tabela[mask]
+
+if df_tabela.empty:
+    st.info("Nenhum lançamento encontrado na tabela detalhada.")
+else:
+    tabela_exibir = df_tabela.copy()
+    tabela_exibir["Data"] = tabela_exibir["_data_mes"].apply(formatar_data_curta)
+    tabela_exibir["Estabelecimento"] = tabela_exibir["_estabelecimento"]
+    tabela_exibir["Categoria"] = tabela_exibir["_categoria"]
+    tabela_exibir["Tipo"] = tabela_exibir["_entrada"]
+    tabela_exibir["Status"] = tabela_exibir["_status_exibicao"]
+    tabela_exibir["Valor"] = tabela_exibir["_valor_num"].apply(formatar_brl)
+    tabela_exibir["Observação"] = tabela_exibir["_detalhes"]
+    tabela_exibir["Whatsapp"] = tabela_exibir["_whatsapp"]
+
+    st.dataframe(
+        tabela_exibir[
+            ["Data", "Estabelecimento", "Categoria", "Tipo", "Status", "Valor", "Observação", "Whatsapp"]
+        ],
+        use_container_width=True,
+        hide_index=True
+    )
 
 # =========================================================
 # ATUALIZAR STATUS / VALOR
@@ -1003,12 +1696,12 @@ with g2:
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 st.markdown('<div class="section-title">✏️ Atualizar status e valor</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="section-text">Altere o campo <b>Status</b> e também o <b>Valor</b> diretamente pelo dashboard. Use a busca para localizar por estabelecimento, categoria, detalhes ou whatsapp.</div>',
+    '<div class="section-text">Altere <b>Status</b> e <b>Valor</b> diretamente pelo dashboard. A busca localiza por estabelecimento, categoria, detalhes ou whatsapp.</div>',
     unsafe_allow_html=True
 )
 
 busca = st.text_input(
-    "Buscar lançamento",
+    "Buscar lançamento para editar",
     placeholder="Ex.: Valeria, OpenAI, internet, mídia...",
     label_visibility="collapsed"
 )
@@ -1044,7 +1737,7 @@ else:
         valor_txt = formatar_brl(row["_valor_num"])
         entrada = row["_entrada"] if str(row["_entrada"]).strip() else "-"
         categoria = row["_categoria"] if str(row["_categoria"]).strip() else "-"
-        status_atual = row["_status"] if str(row["_status"]).strip() else "Sem status"
+        status_atual = row["_status_exibicao"] if str(row["_status_exibicao"]).strip() else "Sem status"
         detalhes = row["_detalhes"] if str(row["_detalhes"]).strip() else "-"
         whatsapp = row["_whatsapp"] if str(row["_whatsapp"]).strip() else "-"
         mes_txt = row["_mes_raw"] if str(row["_mes_raw"]).strip() else "-"
@@ -1059,8 +1752,8 @@ else:
             st.markdown(
                 f"""
                 <div class="item-meta">
-                    <b>Mês:</b> {mes_txt}&nbsp;&nbsp;&nbsp;
-                    <b>Entrada:</b> {entrada}&nbsp;&nbsp;&nbsp;
+                    <b>Data:</b> {mes_txt}&nbsp;&nbsp;&nbsp;
+                    <b>Tipo:</b> {entrada}&nbsp;&nbsp;&nbsp;
                     <b>Categoria:</b> {categoria}<br>
                     <b>Detalhes:</b> {detalhes}<br>
                     <b>Whatsapp:</b> {whatsapp}
