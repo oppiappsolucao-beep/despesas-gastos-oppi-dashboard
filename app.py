@@ -231,7 +231,9 @@ st.markdown("""
         position: absolute;
         left: 0;
         top: calc(100% + 8px);
-        width: 260px;
+        width: 320px;
+        max-height: 360px;
+        overflow-y: auto;
         background: #ffffff;
         border: 1px solid #e8eaf2;
         border-radius: 16px;
@@ -508,16 +510,8 @@ def montar_detalhes_status_html(df_base, status_nome):
     qtd = len(base)
     valor_total = formatar_brl(base["_valor_num"].sum())
 
-    top = (
-        base.groupby("_estabelecimento", dropna=False)["_valor_num"]
-        .sum()
-        .reset_index()
-        .sort_values("_valor_num", ascending=False)
-        .head(5)
-    )
-
     itens_html = ""
-    for _, r in top.iterrows():
+    for _, r in base.iterrows():
         nome = html.escape(str(r["_estabelecimento"]).strip() or "-")
         valor = formatar_brl(r["_valor_num"])
         itens_html += f'<div class="status-hover-item">• {nome}: {valor}</div>'
@@ -526,7 +520,7 @@ def montar_detalhes_status_html(df_base, status_nome):
     <div class="status-hover-title">{html.escape(status_nome)}</div>
     <div class="status-hover-line">Qtd: {qtd}</div>
     <div class="status-hover-line">Valor total: {valor_total}</div>
-    <div class="status-hover-subtitle">Principais:</div>
+    <div class="status-hover-subtitle">Todos os registros:</div>
     {itens_html}
     """
 
