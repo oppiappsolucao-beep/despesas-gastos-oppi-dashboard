@@ -1559,7 +1559,12 @@ with st.container():
             novo_valor = st.text_input("Valor", placeholder="Ex.: 1574,00")
 
         with nl4:
-            novo_tipo = st.selectbox("Tipo", ["Receita", "Despesa"])
+            novo_tipo = st.selectbox("Tipo", ["Receita", "Despesa"], index=0)
+
+        if novo_tipo == "Receita":
+            opcoes_status = ["Recebido", "A Receber"]
+        else:
+            opcoes_status = ["Pago", "A Pagar"]
 
         nl5, nl6, nl7 = st.columns(3)
 
@@ -1567,10 +1572,7 @@ with st.container():
             nova_categoria = st.text_input("Categoria")
 
         with nl6:
-            if novo_tipo == "Receita":
-                novo_status = st.selectbox("Status", ["Recebido", "A Receber"])
-            else:
-                novo_status = st.selectbox("Status", ["Pago", "A Pagar"])
+            novo_status = st.selectbox("Status", opcoes_status, index=0)
 
         with nl7:
             novo_whatsapp = st.text_input("Whatsapp")
