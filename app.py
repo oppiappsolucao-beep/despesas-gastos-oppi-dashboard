@@ -550,11 +550,9 @@ def parse_brl(valor):
     s = str(valor).strip()
     if not s:
         return 0.0
-
     s = s.replace("R$", "").replace("r$", "").strip()
     s = s.replace(".", "").replace(",", ".")
     s = re.sub(r"[^0-9.\-]", "", s)
-
     try:
         return float(s)
     except Exception:
@@ -612,7 +610,6 @@ def normalizar_entrada(valor):
 
 def normalizar_status_base(valor):
     s = str(valor or "").strip().lower()
-
     if s in ["pago", "paga", "pagamento efetuado"]:
         return "pago"
     if s in ["a pagar", "apagar"]:
@@ -621,7 +618,6 @@ def normalizar_status_base(valor):
         return "recebido"
     if s in ["a receber", "areceber"]:
         return "a receber"
-
     return s
 
 def status_exibicao_por_tipo(entrada_norm, status_base, data_ref, hoje_ref):
@@ -668,7 +664,6 @@ def render_logo():
     logo_path = encontrar_logo()
     if not logo_path:
         return
-
     try:
         img_bytes = logo_path.read_bytes()
         mime_type = mimetypes.guess_type(str(logo_path))[0] or "image/png"
@@ -688,16 +683,13 @@ def render_logo():
 
 def montar_detalhes_status_html(df_base, status_nome):
     base = df_base[df_base["_status_exibicao"].str.lower() == status_nome.lower()].copy()
-
     if base.empty:
         return """
         <div class="status-hover-title">Sem registros</div>
         <div class="status-hover-line">Nenhum item encontrado nesse status.</div>
         """
-
     qtd = len(base)
     valor_total = formatar_brl(base["_valor_num"].sum())
-
     itens_html = ""
     for _, r in base.iterrows():
         nome = html.escape(str(r["_estabelecimento"]).strip() or "-")
@@ -712,8 +704,10 @@ def montar_detalhes_status_html(df_base, status_nome):
     <div class="status-hover-subtitle">Todos os registros:</div>
     {itens_html}
     """
-
     return html_final.strip()
+
+def opcoes_status_por_tipo(tipo):
+    return ["Recebido", "A Receber"] if tipo == "Receita" else ["Pago", "A Pagar"]
 
 # =========================================================
 # GOOGLE SHEETS
@@ -896,12 +890,39 @@ if not meta.get("valor_col_name"):
     st.stop()
 
 # =========================================================
-# PRÉ-PROCESSAMENTO
+# SESSION STATE - NOVO LANÇAMENTO
 # =========================================================
 hoje = datetime.now(TZ).date()
+
+if "novo_tipo" not in st.session_state:
+    st.session_state["novo_tipo"] = "Receita"
+if "novo_status" not in st.session_state:
+    st.session_state["novo_status"] = "Recebido"
+if "nova_data" not in st.session_state:
+    st.session_state["nova_data"] = hoje
+if "novo_estabelecimento" not in st.session_state:
+    st.session_state["novo_estabelecimento"] = ""
+if "novo_valor" not in st.session_state:
+    st.session_state["novo_valor"] = ""
+if "nova_categoria" not in st.session_state:
+    st.session_state["nova_categoria"] = ""
+if "novo_whatsapp" not in st.session_state:
+    st.session_state["novo_whatsapp"] = ""
+if "novo_detalhes" not in st.session_state:
+    st.session_state["novo_detalhes"] = ""
+
+def ao_mudar_tipo():
+    tipo = st.session_state["novo_tipo"]
+    opcoes = opcoes_status_por_tipo(tipo)
+    if st.session_state.get("novo_status") not in opcoes:
+        st.session_state["novo_status"] = opcoes[0]
+
 amanha = hoje + timedelta(days=1)
 fim_7_dias = hoje + timedelta(days=7)
 
+# =========================================================
+# PRÉ-PROCESSAMENTO
+# =========================================================
 df["_entrada_norm"] = df["_entrada"].apply(normalizar_entrada)
 df["_status_base"] = df["_status"].apply(normalizar_status_base)
 
@@ -921,7 +942,6 @@ df["_status_exibicao"] = df.apply(
 meses_opcoes = ["Todos"] + sorted(
     [m for m in df["_mes_label"].dropna().unique().tolist() if m != "Sem data"]
 )
-
 estab_opcoes = ["Todos"] + sorted([x for x in df["_estabelecimento"].unique().tolist() if str(x).strip()])
 categoria_opcoes = ["Todas"] + sorted([x for x in df["_categoria"].unique().tolist() if str(x).strip()])
 entrada_opcoes = ["Todas"] + sorted([x.title() for x in df["_entrada_norm"].unique().tolist() if str(x).strip()])
@@ -948,13 +968,10 @@ df_filtrado = df.copy()
 
 if filtro_mes != "Todos":
     df_filtrado = df_filtrado[df_filtrado["_mes_label"] == filtro_mes]
-
 if filtro_estab != "Todos":
     df_filtrado = df_filtrado[df_filtrado["_estabelecimento"] == filtro_estab]
-
 if filtro_categoria != "Todas":
     df_filtrado = df_filtrado[df_filtrado["_categoria"] == filtro_categoria]
-
 if filtro_entrada != "Todas":
     df_filtrado = df_filtrado[df_filtrado["_entrada_norm"] == filtro_entrada.lower()]
 
@@ -962,7 +979,6 @@ if filtro_entrada != "Todas":
 # KPIs - RESUMO DO MÊS
 # =========================================================
 total_registros = len(df_filtrado)
-
 qtd_receitas = int((df_filtrado["_entrada_norm"] == "receita").sum())
 qtd_despesas = int((df_filtrado["_entrada_norm"] == "despesa").sum())
 
@@ -1082,7 +1098,6 @@ despesas_7_dias = df_prev.loc[
 
 saldo_prev_7_dias = ganhos_7_dias - despesas_7_dias
 
-# Próximo vencimento (somente despesa a pagar)
 base_prox_venc = df_filtrado[
     (df_filtrado["_entrada_norm"] == "despesa") &
     (df_filtrado["_status_base"] == "a pagar") &
@@ -1126,11 +1141,8 @@ receb_atrasado_df = df_filtrado[
 
 qtd_contas_hoje = len(contas_hoje_df)
 valor_contas_hoje = contas_hoje_df["_valor_num"].sum()
-
 qtd_contas_amanha = len(contas_amanha_df)
 valor_contas_amanha = contas_amanha_df["_valor_num"].sum()
-
-qtd_receb_atrasado = len(receb_atrasado_df)
 valor_receb_atrasado = receb_atrasado_df["_valor_num"].sum()
 
 categoria_alerta_txt = ""
@@ -1235,7 +1247,6 @@ with r5:
 # ALERTAS
 # =========================================================
 st.markdown("<br>", unsafe_allow_html=True)
-
 st.markdown(
     f"""
     <div class="alert-card">
@@ -1324,7 +1335,6 @@ with s5:
     )
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 mini1, mini2, mini3, mini4, mini5 = st.columns(5)
 
 with mini1:
@@ -1336,9 +1346,7 @@ with mini1:
                 <div class="status-mini-value">{qtd_pago}</div>
                 <div class="status-mini-caption">Despesas pagas</div>
             </div>
-            <div class="status-hover-box">
-                {hover_pago}
-            </div>
+            <div class="status-hover-box">{hover_pago}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1353,9 +1361,7 @@ with mini2:
                 <div class="status-mini-value">{qtd_recebido}</div>
                 <div class="status-mini-caption">Receitas recebidas</div>
             </div>
-            <div class="status-hover-box">
-                {hover_recebido}
-            </div>
+            <div class="status-hover-box">{hover_recebido}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1370,9 +1376,7 @@ with mini3:
                 <div class="status-mini-value">{qtd_apagar}</div>
                 <div class="status-mini-caption">Despesas pendentes</div>
             </div>
-            <div class="status-hover-box">
-                {hover_apagar}
-            </div>
+            <div class="status-hover-box">{hover_apagar}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1387,9 +1391,7 @@ with mini4:
                 <div class="status-mini-value">{qtd_areceber}</div>
                 <div class="status-mini-caption">Receitas pendentes</div>
             </div>
-            <div class="status-hover-box">
-                {hover_areceber}
-            </div>
+            <div class="status-hover-box">{hover_areceber}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1404,9 +1406,7 @@ with mini5:
                 <div class="status-mini-value">{qtd_vencido}</div>
                 <div class="status-mini-caption">Despesas atrasadas</div>
             </div>
-            <div class="status-hover-box">
-                {hover_vencido}
-            </div>
+            <div class="status-hover-box">{hover_vencido}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1488,11 +1488,9 @@ with p5:
     )
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 nv1, nv2 = st.columns([1.25, 1])
 
 with nv1:
-    top5_html = ""
     if top5_vencer.empty:
         top5_html = '<div class="next-due-list">Nenhuma conta futura encontrada.</div>'
     else:
@@ -1546,74 +1544,110 @@ st.markdown(
 with st.container():
     st.markdown('<div class="create-card">', unsafe_allow_html=True)
 
-    with st.form("form_novo_lancamento", clear_on_submit=True):
-        nl1, nl2, nl3, nl4 = st.columns(4)
+    nl1, nl2, nl3, nl4 = st.columns(4)
 
-        with nl1:
-            nova_data = st.date_input("Data", value=hoje, format="DD/MM/YYYY")
+    with nl1:
+        nova_data = st.date_input(
+            "Data",
+            key="nova_data",
+            format="DD/MM/YYYY"
+        )
 
-        with nl2:
-            novo_estabelecimento = st.text_input("Estabelecimento")
+    with nl2:
+        novo_estabelecimento = st.text_input(
+            "Estabelecimento",
+            key="novo_estabelecimento"
+        )
 
-        with nl3:
-            novo_valor = st.text_input("Valor", placeholder="Ex.: 1574,00")
+    with nl3:
+        novo_valor = st.text_input(
+            "Valor",
+            key="novo_valor",
+            placeholder="Ex.: 1574,00"
+        )
 
-        with nl4:
-            novo_tipo = st.selectbox("Tipo", ["Receita", "Despesa"], index=0)
+    with nl4:
+        novo_tipo = st.selectbox(
+            "Tipo",
+            ["Receita", "Despesa"],
+            key="novo_tipo",
+            on_change=ao_mudar_tipo
+        )
 
-        if novo_tipo == "Receita":
-            opcoes_status = ["Recebido", "A Receber"]
-        else:
-            opcoes_status = ["Pago", "A Pagar"]
+    opcoes_status = opcoes_status_por_tipo(st.session_state["novo_tipo"])
+    if st.session_state["novo_status"] not in opcoes_status:
+        st.session_state["novo_status"] = opcoes_status[0]
 
-        nl5, nl6, nl7 = st.columns(3)
+    nl5, nl6, nl7 = st.columns(3)
 
-        with nl5:
-            nova_categoria = st.text_input("Categoria")
+    with nl5:
+        nova_categoria = st.text_input(
+            "Categoria",
+            key="nova_categoria"
+        )
 
-        with nl6:
-            novo_status = st.selectbox("Status", opcoes_status, index=0)
+    with nl6:
+        novo_status = st.selectbox(
+            "Status",
+            opcoes_status,
+            key="novo_status"
+        )
 
-        with nl7:
-            novo_whatsapp = st.text_input("Whatsapp")
+    with nl7:
+        novo_whatsapp = st.text_input(
+            "Whatsapp",
+            key="novo_whatsapp"
+        )
 
-        novo_detalhes = st.text_area("Detalhes", height=90)
+    novo_detalhes = st.text_area(
+        "Detalhes",
+        key="novo_detalhes",
+        height=90
+    )
 
-        salvar_novo = st.form_submit_button("Salvar lançamento", use_container_width=True)
+    if st.button("Salvar lançamento", use_container_width=True, key="btn_salvar_novo_lancamento"):
+        try:
+            if not str(st.session_state["novo_estabelecimento"]).strip():
+                raise ValueError("Preencha o estabelecimento.")
 
-        if salvar_novo:
-            try:
-                if not str(novo_estabelecimento).strip():
-                    raise ValueError("Preencha o estabelecimento.")
+            if not str(st.session_state["novo_valor"]).strip():
+                raise ValueError("Preencha o valor.")
 
-                if not str(novo_valor).strip():
-                    raise ValueError("Preencha o valor.")
+            if parse_brl(st.session_state["novo_valor"]) <= 0:
+                raise ValueError("Digite um valor maior que zero.")
 
-                if parse_brl(novo_valor) <= 0:
-                    raise ValueError("Digite um valor maior que zero.")
+            if not str(st.session_state["nova_categoria"]).strip():
+                raise ValueError("Preencha a categoria.")
 
-                if not str(nova_categoria).strip():
-                    raise ValueError("Preencha a categoria.")
+            data_formatada = pd.to_datetime(st.session_state["nova_data"]).strftime("%d/%m/%Y")
 
-                data_formatada = pd.to_datetime(nova_data).strftime("%d/%m/%Y")
+            adicionar_lancamento(
+                meta=meta,
+                data_str=data_formatada,
+                estabelecimento=str(st.session_state["novo_estabelecimento"]).strip(),
+                valor=st.session_state["novo_valor"],
+                tipo=st.session_state["novo_tipo"],
+                categoria=str(st.session_state["nova_categoria"]).strip(),
+                status=st.session_state["novo_status"],
+                detalhes=str(st.session_state["novo_detalhes"]).strip(),
+                whatsapp=str(st.session_state["novo_whatsapp"]).strip(),
+            )
 
-                adicionar_lancamento(
-                    meta=meta,
-                    data_str=data_formatada,
-                    estabelecimento=str(novo_estabelecimento).strip(),
-                    valor=novo_valor,
-                    tipo=novo_tipo,
-                    categoria=str(nova_categoria).strip(),
-                    status=novo_status,
-                    detalhes=str(novo_detalhes).strip(),
-                    whatsapp=str(novo_whatsapp).strip(),
-                )
+            st.success("Novo lançamento adicionado com sucesso.")
 
-                st.success("Novo lançamento adicionado com sucesso.")
-                st.rerun()
+            st.session_state["nova_data"] = hoje
+            st.session_state["novo_estabelecimento"] = ""
+            st.session_state["novo_valor"] = ""
+            st.session_state["novo_tipo"] = "Receita"
+            st.session_state["novo_status"] = "Recebido"
+            st.session_state["nova_categoria"] = ""
+            st.session_state["novo_whatsapp"] = ""
+            st.session_state["novo_detalhes"] = ""
 
-            except Exception as e:
-                st.error(f"Erro ao adicionar lançamento: {e}")
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"Erro ao adicionar lançamento: {e}")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1734,7 +1768,6 @@ with g2:
             st.info("Sem dados para o gráfico de status.")
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 g3, g4 = st.columns(2)
 
 with g3:
