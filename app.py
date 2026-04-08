@@ -316,6 +316,10 @@ st.markdown("""
         border-left: 5px solid #ef4444;
     }
 
+    .status-mini-card.recebido {
+        border-left: 5px solid #10b981;
+    }
+
     .status-mini-title {
         font-size: 0.9rem;
         font-weight: 700;
@@ -458,6 +462,11 @@ st.markdown("""
         color: #c62828;
     }
 
+    .status-recebido {
+        background: #dff7e8;
+        color: #118a43;
+    }
+
     .small-note {
         font-size: 0.88rem;
         color: #6b7280;
@@ -576,6 +585,55 @@ def formatar_data_curta(data):
     except Exception:
         return "-"
 
+def cor_saldo(valor):
+    return "saldo-pos" if valor >= 0 else "saldo-neg"
+
+def texto_plural(qtd, singular, plural=None):
+    if plural is None:
+        plural = singular + "s"
+    return singular if qtd == 1 else plural
+
+def normalizar_entrada(valor):
+    s = str(valor or "").strip().lower()
+    if "receita" in s:
+        return "receita"
+    if "despesa" in s:
+        return "despesa"
+    return s
+
+def normalizar_status_base(valor):
+    s = str(valor or "").strip().lower()
+
+    if s in ["pago", "paga", "pagamento efetuado"]:
+        return "pago"
+    if s in ["a pagar", "apagar"]:
+        return "a pagar"
+    if s in ["recebido", "recebida"]:
+        return "recebido"
+    if s in ["a receber", "areceber"]:
+        return "a receber"
+
+    return s
+
+def status_exibicao_por_tipo(entrada_norm, status_base, data_ref, hoje_ref):
+    if entrada_norm == "receita":
+        if status_base in ["pago", "recebido"]:
+            return "Recebido"
+        if status_base == "a receber":
+            return "A Receber"
+        return "A Receber"
+
+    if entrada_norm == "despesa":
+        if status_base == "pago":
+            return "Pago"
+        if status_base == "a pagar":
+            if pd.notna(data_ref) and data_ref < hoje_ref:
+                return "Vencido"
+            return "A Pagar"
+        return "A Pagar"
+
+    return str(status_base).title() if status_base else "Sem status"
+
 def status_class(status):
     s = str(status or "").strip().lower()
     if s == "pago":
@@ -586,6 +644,8 @@ def status_class(status):
         return "status-pill status-areceber"
     if s == "vencido":
         return "status-pill status-vencido"
+    if s == "recebido":
+        return "status-pill status-recebido"
     return "status-pill"
 
 def encontrar_logo():
@@ -645,14 +705,6 @@ def montar_detalhes_status_html(df_base, status_nome):
     """
 
     return html_final.strip()
-
-def cor_saldo(valor):
-    return "saldo-pos" if valor >= 0 else "saldo-neg"
-
-def texto_plural(qtd, singular, plural=None):
-    if plural is None:
-        plural = singular + "s"
-    return singular if qtd == 1 else plural
 
 # =========================================================
 # GOOGLE SHEETS
@@ -809,18 +861,18 @@ hoje = datetime.now(TZ).date()
 amanha = hoje + timedelta(days=1)
 fim_7_dias = hoje + timedelta(days=7)
 
-df["_entrada_norm"] = df["_entrada"].astype(str).str.strip().str.lower()
-df["_status_norm"] = df["_status"].astype(str).str.strip().str.lower()
-df["_categoria_norm"] = df["_categoria"].astype(str).str.strip()
+df["_entrada_norm"] = df["_entrada"].apply(normalizar_entrada)
+df["_status_base"] = df["_status"].apply(normalizar_status_base)
 
-# status para exibição gerencial
-df["_status_exibicao"] = df["_status"]
-mask_vencido = (
-    (df["_status_norm"] == "a pagar") &
-    (df["_data_ref"].notna()) &
-    (df["_data_ref"] < hoje)
+df["_status_exibicao"] = df.apply(
+    lambda r: status_exibicao_por_tipo(
+        r["_entrada_norm"],
+        r["_status_base"],
+        r["_data_ref"],
+        hoje
+    ),
+    axis=1
 )
-df.loc[mask_vencido, "_status_exibicao"] = "Vencido"
 
 # =========================================================
 # FILTROS
@@ -831,7 +883,7 @@ meses_opcoes = ["Todos"] + sorted(
 
 estab_opcoes = ["Todos"] + sorted([x for x in df["_estabelecimento"].unique().tolist() if str(x).strip()])
 categoria_opcoes = ["Todas"] + sorted([x for x in df["_categoria"].unique().tolist() if str(x).strip()])
-entrada_opcoes = ["Todas"] + sorted([x for x in df["_entrada"].unique().tolist() if str(x).strip()])
+entrada_opcoes = ["Todas"] + sorted([x.title() for x in df["_entrada_norm"].unique().tolist() if str(x).strip()])
 
 f1, f2, f3, f4 = st.columns(4)
 
@@ -849,7 +901,7 @@ with f3:
 
 with f4:
     st.markdown('<div class="filter-label">Entrada</div>', unsafe_allow_html=True)
-    filtro_entrada = st.selectbox("Entrada", entrada_opcoes, label_visibility="collapsed")
+    filtro_entrada = st.selectbox("Entrada", ["Todas"] + entrada_opcoes, label_visibility="collapsed")
 
 df_filtrado = df.copy()
 
@@ -863,7 +915,7 @@ if filtro_categoria != "Todas":
     df_filtrado = df_filtrado[df_filtrado["_categoria"] == filtro_categoria]
 
 if filtro_entrada != "Todas":
-    df_filtrado = df_filtrado[df_filtrado["_entrada"] == filtro_entrada]
+    df_filtrado = df_filtrado[df_filtrado["_entrada_norm"] == filtro_entrada.lower()]
 
 # =========================================================
 # KPIs - RESUMO DO MÊS
@@ -879,12 +931,8 @@ total_despesas = df_filtrado.loc[df_filtrado["_entrada_norm"] == "despesa", "_va
 resultado_mes = total_receitas - total_despesas
 margem_mes = (resultado_mes / total_receitas * 100) if total_receitas > 0 else 0.0
 
-ticket_medio_receita = (
-    total_receitas / qtd_receitas if qtd_receitas > 0 else 0.0
-)
-ticket_medio_despesa = (
-    total_despesas / qtd_despesas if qtd_despesas > 0 else 0.0
-)
+ticket_medio_receita = total_receitas / qtd_receitas if qtd_receitas > 0 else 0.0
+ticket_medio_despesa = total_despesas / qtd_despesas if qtd_despesas > 0 else 0.0
 
 maior_despesa = df_filtrado.loc[df_filtrado["_entrada_norm"] == "despesa", "_valor_num"].max() if qtd_despesas > 0 else 0.0
 
@@ -893,7 +941,7 @@ base_cat_desp = (
     .groupby("_categoria", dropna=False)["_valor_num"]
     .sum()
     .reset_index()
-    .sort_values("Valor" if "Valor" in [] else "_valor_num", ascending=False)
+    .sort_values("_valor_num", ascending=False)
 )
 
 if not base_cat_desp.empty:
@@ -907,33 +955,50 @@ else:
 # KPIs - REALIZADO / PROJETADO / STATUS
 # =========================================================
 despesa_paga = df_filtrado.loc[
-    (df_filtrado["_entrada_norm"] == "despesa") & (df_filtrado["_status_norm"] == "pago"),
+    (df_filtrado["_entrada_norm"] == "despesa") &
+    (df_filtrado["_status_base"] == "pago"),
     "_valor_num"
 ].sum()
 
 receita_recebida = df_filtrado.loc[
-    (df_filtrado["_entrada_norm"] == "receita") & (df_filtrado["_status_norm"] == "pago"),
+    (df_filtrado["_entrada_norm"] == "receita") &
+    (df_filtrado["_status_base"].isin(["pago", "recebido"])),
     "_valor_num"
 ].sum()
 
 saldo_realizado = receita_recebida - despesa_paga
 
-total_pago = df_filtrado.loc[df_filtrado["_status_norm"] == "pago", "_valor_num"].sum()
-total_apagar = df_filtrado.loc[df_filtrado["_status_norm"] == "a pagar", "_valor_num"].sum()
-total_areceber = df_filtrado.loc[df_filtrado["_status_norm"] == "a receber", "_valor_num"].sum()
+total_pago = despesa_paga
+total_recebido = receita_recebida
+
+total_apagar = df_filtrado.loc[
+    (df_filtrado["_entrada_norm"] == "despesa") &
+    (df_filtrado["_status_base"] == "a pagar"),
+    "_valor_num"
+].sum()
+
+total_areceber = df_filtrado.loc[
+    (df_filtrado["_entrada_norm"] == "receita") &
+    (df_filtrado["_status_base"] == "a receber"),
+    "_valor_num"
+].sum()
 
 total_vencido = df_filtrado.loc[
-    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_entrada_norm"] == "despesa") &
+    (df_filtrado["_status_base"] == "a pagar") &
     (df_filtrado["_data_ref"].notna()) &
     (df_filtrado["_data_ref"] < hoje),
     "_valor_num"
 ].sum()
 
-qtd_pago = int((df_filtrado["_status_norm"] == "pago").sum())
-qtd_apagar = int((df_filtrado["_status_norm"] == "a pagar").sum())
-qtd_areceber = int((df_filtrado["_status_norm"] == "a receber").sum())
+qtd_pago = int(((df_filtrado["_entrada_norm"] == "despesa") & (df_filtrado["_status_base"] == "pago")).sum())
+qtd_recebido = int(((df_filtrado["_entrada_norm"] == "receita") & (df_filtrado["_status_base"].isin(["pago", "recebido"]))).sum())
+qtd_apagar = int(((df_filtrado["_entrada_norm"] == "despesa") & (df_filtrado["_status_base"] == "a pagar")).sum())
+qtd_areceber = int(((df_filtrado["_entrada_norm"] == "receita") & (df_filtrado["_status_base"] == "a receber")).sum())
+
 qtd_vencido = int((
-    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_entrada_norm"] == "despesa") &
+    (df_filtrado["_status_base"] == "a pagar") &
     (df_filtrado["_data_ref"].notna()) &
     (df_filtrado["_data_ref"] < hoje)
 ).sum())
@@ -942,8 +1007,6 @@ saldo_projetado_mes = saldo_realizado + total_areceber - total_apagar
 
 # =========================================================
 # PREVISÕES
-# Hoje = hoje
-# Próximos 7 dias = amanhã até +7 dias
 # =========================================================
 df_prev = df_filtrado.copy()
 df_prev = df_prev[df_prev["_data_ref"].notna()].copy()
@@ -978,9 +1041,10 @@ despesas_7_dias = df_prev.loc[
 
 saldo_prev_7_dias = ganhos_7_dias - despesas_7_dias
 
-# Próximo vencimento
+# Próximo vencimento (somente despesa a pagar)
 base_prox_venc = df_filtrado[
-    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_entrada_norm"] == "despesa") &
+    (df_filtrado["_status_base"] == "a pagar") &
     (df_filtrado["_data_ref"].notna()) &
     (df_filtrado["_data_ref"] >= hoje)
 ].copy().sort_values("_data_ref", ascending=True)
@@ -1001,17 +1065,20 @@ top5_vencer = base_prox_venc.head(5).copy()
 # ALERTAS INTELIGENTES
 # =========================================================
 contas_hoje_df = df_filtrado[
-    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_entrada_norm"] == "despesa") &
+    (df_filtrado["_status_base"] == "a pagar") &
     (df_filtrado["_data_ref"] == hoje)
 ].copy()
 
 contas_amanha_df = df_filtrado[
-    (df_filtrado["_status_norm"] == "a pagar") &
+    (df_filtrado["_entrada_norm"] == "despesa") &
+    (df_filtrado["_status_base"] == "a pagar") &
     (df_filtrado["_data_ref"] == amanha)
 ].copy()
 
 receb_atrasado_df = df_filtrado[
-    (df_filtrado["_status_norm"] == "a receber") &
+    (df_filtrado["_entrada_norm"] == "receita") &
+    (df_filtrado["_status_base"] == "a receber") &
     (df_filtrado["_data_ref"].notna()) &
     (df_filtrado["_data_ref"] < hoje)
 ].copy()
@@ -1142,6 +1209,7 @@ st.markdown(
 # LINHA 2 — SITUAÇÃO FINANCEIRA
 # =========================================================
 hover_pago = montar_detalhes_status_html(df_filtrado, "Pago")
+hover_recebido = montar_detalhes_status_html(df_filtrado, "Recebido")
 hover_apagar = montar_detalhes_status_html(df_filtrado, "A Pagar")
 hover_areceber = montar_detalhes_status_html(df_filtrado, "A Receber")
 hover_vencido = montar_detalhes_status_html(df_filtrado, "Vencido")
@@ -1155,14 +1223,27 @@ with s1:
         <div class="kpi-card verde compacto">
             <div class="kpi-title">Total já pago</div>
             <div class="kpi-value">{formatar_brl(total_pago)}</div>
-            <div class="kpi-caption">Valor efetivamente realizado</div>
-            <div class="kpi-helper">Inclui receitas e despesas com status Pago</div>
+            <div class="kpi-caption">{qtd_pago} despesas pagas</div>
+            <div class="kpi-helper">Somente despesas com status Pago</div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
 with s2:
+    st.markdown(
+        f"""
+        <div class="kpi-card azul compacto">
+            <div class="kpi-title">Total recebido</div>
+            <div class="kpi-value">{formatar_brl(total_recebido)}</div>
+            <div class="kpi-caption">{qtd_recebido} receitas recebidas</div>
+            <div class="kpi-helper">Somente receitas com status Recebido</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with s3:
     st.markdown(
         f"""
         <div class="kpi-card laranja compacto">
@@ -1175,7 +1256,7 @@ with s2:
         unsafe_allow_html=True
     )
 
-with s3:
+with s4:
     st.markdown(
         f"""
         <div class="kpi-card roxo compacto">
@@ -1188,26 +1269,13 @@ with s3:
         unsafe_allow_html=True
     )
 
-with s4:
-    st.markdown(
-        f"""
-        <div class="kpi-card vermelho compacto">
-            <div class="kpi-title">Vencido</div>
-            <div class="kpi-value">{formatar_brl(total_vencido)}</div>
-            <div class="kpi-caption">{qtd_vencido} lançamentos atrasados</div>
-            <div class="kpi-helper">A pagar com data anterior a hoje</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 with s5:
     st.markdown(
         f"""
         <div class="kpi-card {'verde' if saldo_projetado_mes >= 0 else 'vermelho'} compacto">
             <div class="kpi-title">Saldo projetado</div>
             <div class="kpi-value {cor_saldo(saldo_projetado_mes)}">{formatar_brl(saldo_projetado_mes)}</div>
-            <div class="kpi-caption">Saldo atual + receber - pagar</div>
+            <div class="kpi-caption">Recebido + a receber - a pagar</div>
             <div class="kpi-helper">Visão projetada do período filtrado</div>
         </div>
         """,
@@ -1216,7 +1284,7 @@ with s5:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-mini1, mini2, mini3, mini4 = st.columns(4)
+mini1, mini2, mini3, mini4, mini5 = st.columns(5)
 
 with mini1:
     st.markdown(
@@ -1225,7 +1293,7 @@ with mini1:
             <div class="status-mini-card pago">
                 <div class="status-mini-title">Pago</div>
                 <div class="status-mini-value">{qtd_pago}</div>
-                <div class="status-mini-caption">Passe o mouse</div>
+                <div class="status-mini-caption">Despesas pagas</div>
             </div>
             <div class="status-hover-box">
                 {hover_pago}
@@ -1239,13 +1307,13 @@ with mini2:
     st.markdown(
         f"""
         <div class="status-mini-wrap">
-            <div class="status-mini-card apagar">
-                <div class="status-mini-title">A Pagar</div>
-                <div class="status-mini-value">{qtd_apagar}</div>
-                <div class="status-mini-caption">Passe o mouse</div>
+            <div class="status-mini-card recebido">
+                <div class="status-mini-title">Recebido</div>
+                <div class="status-mini-value">{qtd_recebido}</div>
+                <div class="status-mini-caption">Receitas recebidas</div>
             </div>
             <div class="status-hover-box">
-                {hover_apagar}
+                {hover_recebido}
             </div>
         </div>
         """,
@@ -1256,13 +1324,13 @@ with mini3:
     st.markdown(
         f"""
         <div class="status-mini-wrap">
-            <div class="status-mini-card areceber">
-                <div class="status-mini-title">A Receber</div>
-                <div class="status-mini-value">{qtd_areceber}</div>
-                <div class="status-mini-caption">Passe o mouse</div>
+            <div class="status-mini-card apagar">
+                <div class="status-mini-title">A Pagar</div>
+                <div class="status-mini-value">{qtd_apagar}</div>
+                <div class="status-mini-caption">Despesas pendentes</div>
             </div>
             <div class="status-hover-box">
-                {hover_areceber}
+                {hover_apagar}
             </div>
         </div>
         """,
@@ -1273,10 +1341,27 @@ with mini4:
     st.markdown(
         f"""
         <div class="status-mini-wrap">
+            <div class="status-mini-card areceber">
+                <div class="status-mini-title">A Receber</div>
+                <div class="status-mini-value">{qtd_areceber}</div>
+                <div class="status-mini-caption">Receitas pendentes</div>
+            </div>
+            <div class="status-hover-box">
+                {hover_areceber}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with mini5:
+    st.markdown(
+        f"""
+        <div class="status-mini-wrap">
             <div class="status-mini-card vencido">
                 <div class="status-mini-title">Vencido</div>
                 <div class="status-mini-value">{qtd_vencido}</div>
-                <div class="status-mini-caption">Passe o mouse</div>
+                <div class="status-mini-caption">Despesas atrasadas</div>
             </div>
             <div class="status-hover-box">
                 {hover_vencido}
@@ -1301,7 +1386,7 @@ with p1:
             <div class="kpi-title">Receita recebida</div>
             <div class="kpi-value">{formatar_brl(receita_recebida)}</div>
             <div class="kpi-caption">Entradas já realizadas</div>
-            <div class="kpi-helper">Somente receitas com status Pago</div>
+            <div class="kpi-helper">Somente receitas com status Recebido</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1326,8 +1411,8 @@ with p3:
         <div class="kpi-card {'verde' if saldo_realizado >= 0 else 'vermelho'} alto">
             <div class="kpi-title">Saldo realizado</div>
             <div class="kpi-value {cor_saldo(saldo_realizado)}">{formatar_brl(saldo_realizado)}</div>
-            <div class="kpi-caption">O que já entrou menos o que já saiu</div>
-            <div class="kpi-helper">Visão real do caixa realizado</div>
+            <div class="kpi-caption">Recebido menos pago</div>
+            <div class="kpi-helper">Visão real do caixa já realizado</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1618,6 +1703,8 @@ with t1:
             "Só vencidos",
             "Só a pagar",
             "Só a receber",
+            "Só recebidos",
+            "Só pagos",
             "Hoje",
             "Próximos 7 dias",
             "Este mês"
@@ -1633,15 +1720,15 @@ with t2:
 df_tabela = df_filtrado.copy()
 
 if filtro_rapido == "Só vencidos":
-    df_tabela = df_tabela[
-        (df_tabela["_status_norm"] == "a pagar") &
-        (df_tabela["_data_ref"].notna()) &
-        (df_tabela["_data_ref"] < hoje)
-    ]
+    df_tabela = df_tabela[df_tabela["_status_exibicao"] == "Vencido"]
 elif filtro_rapido == "Só a pagar":
-    df_tabela = df_tabela[df_tabela["_status_norm"] == "a pagar"]
+    df_tabela = df_tabela[df_tabela["_status_exibicao"] == "A Pagar"]
 elif filtro_rapido == "Só a receber":
-    df_tabela = df_tabela[df_tabela["_status_norm"] == "a receber"]
+    df_tabela = df_tabela[df_tabela["_status_exibicao"] == "A Receber"]
+elif filtro_rapido == "Só recebidos":
+    df_tabela = df_tabela[df_tabela["_status_exibicao"] == "Recebido"]
+elif filtro_rapido == "Só pagos":
+    df_tabela = df_tabela[df_tabela["_status_exibicao"] == "Pago"]
 elif filtro_rapido == "Hoje":
     df_tabela = df_tabela[df_tabela["_data_ref"] == hoje]
 elif filtro_rapido == "Próximos 7 dias":
@@ -1676,7 +1763,7 @@ else:
     tabela_exibir["Data"] = tabela_exibir["_data_mes"].apply(formatar_data_curta)
     tabela_exibir["Estabelecimento"] = tabela_exibir["_estabelecimento"]
     tabela_exibir["Categoria"] = tabela_exibir["_categoria"]
-    tabela_exibir["Tipo"] = tabela_exibir["_entrada"]
+    tabela_exibir["Tipo"] = tabela_exibir["_entrada"].str.title()
     tabela_exibir["Status"] = tabela_exibir["_status_exibicao"]
     tabela_exibir["Valor"] = tabela_exibir["_valor_num"].apply(formatar_brl)
     tabela_exibir["Observação"] = tabela_exibir["_detalhes"]
@@ -1696,7 +1783,7 @@ else:
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 st.markdown('<div class="section-title">✏️ Atualizar status e valor</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="section-text">Altere <b>Status</b> e <b>Valor</b> diretamente pelo dashboard. A busca localiza por estabelecimento, categoria, detalhes ou whatsapp.</div>',
+    '<div class="section-text">Altere <b>Status</b> e <b>Valor</b> diretamente pelo dashboard. Receitas usam <b>Recebido / A Receber</b> e despesas usam <b>Pago / A Pagar</b>.</div>',
     unsafe_allow_html=True
 )
 
@@ -1715,7 +1802,7 @@ if filtro_estab != "Todos":
 if filtro_categoria != "Todas":
     df_update = df_update[df_update["_categoria"] == filtro_categoria]
 if filtro_entrada != "Todas":
-    df_update = df_update[df_update["_entrada"] == filtro_entrada]
+    df_update = df_update[df_update["_entrada_norm"] == filtro_entrada.lower()]
 
 if busca.strip():
     termo = busca.strip().lower()
@@ -1735,7 +1822,7 @@ else:
     for _, row in df_update.iterrows():
         estabelecimento = row["_estabelecimento"] if str(row["_estabelecimento"]).strip() else "-"
         valor_txt = formatar_brl(row["_valor_num"])
-        entrada = row["_entrada"] if str(row["_entrada"]).strip() else "-"
+        entrada = row["_entrada_norm"] if str(row["_entrada_norm"]).strip() else "-"
         categoria = row["_categoria"] if str(row["_categoria"]).strip() else "-"
         status_atual = row["_status_exibicao"] if str(row["_status_exibicao"]).strip() else "Sem status"
         detalhes = row["_detalhes"] if str(row["_detalhes"]).strip() else "-"
@@ -1743,9 +1830,20 @@ else:
         mes_txt = row["_mes_raw"] if str(row["_mes_raw"]).strip() else "-"
         sheet_row = int(row["_sheet_row"])
 
+        if entrada == "receita":
+            btn_ok_label = "Recebido"
+            btn_pendente_label = "A Receber"
+            status_ok_gravar = "Recebido"
+            status_pendente_gravar = "A Receber"
+        else:
+            btn_ok_label = "Pago"
+            btn_pendente_label = "A Pagar"
+            status_ok_gravar = "Pago"
+            status_pendente_gravar = "A Pagar"
+
         st.markdown('<div class="update-card">', unsafe_allow_html=True)
 
-        info1, info2, info3, b0, b1, b2, b3 = st.columns([3.0, 1.45, 1.1, 1.35, 0.95, 0.95, 1.0])
+        info1, info2, info3, b0, b1, b2 = st.columns([3.2, 1.45, 1.15, 1.35, 1.0, 1.1])
 
         with info1:
             st.markdown(f'<div class="item-title">{estabelecimento}</div>', unsafe_allow_html=True)
@@ -1753,7 +1851,7 @@ else:
                 f"""
                 <div class="item-meta">
                     <b>Data:</b> {mes_txt}&nbsp;&nbsp;&nbsp;
-                    <b>Tipo:</b> {entrada}&nbsp;&nbsp;&nbsp;
+                    <b>Tipo:</b> {entrada.title()}&nbsp;&nbsp;&nbsp;
                     <b>Categoria:</b> {categoria}<br>
                     <b>Detalhes:</b> {detalhes}<br>
                     <b>Whatsapp:</b> {whatsapp}
@@ -1792,31 +1890,22 @@ else:
                     st.error(f"Erro ao atualizar valor: {e}")
 
         with b1:
-            if st.button("Pago", key=f"pago_{sheet_row}", use_container_width=True):
+            if st.button(btn_ok_label, key=f"ok_{sheet_row}", use_container_width=True):
                 try:
-                    atualizar_status(sheet_row, "Pago")
-                    st.success(f"Status da linha {sheet_row} atualizado para Pago.")
+                    atualizar_status(sheet_row, status_ok_gravar)
+                    st.success(f"Status da linha {sheet_row} atualizado para {status_ok_gravar}.")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Erro ao atualizar para Pago: {e}")
+                    st.error(f"Erro ao atualizar para {status_ok_gravar}: {e}")
 
         with b2:
-            if st.button("A Pagar", key=f"apagar_{sheet_row}", use_container_width=True):
+            if st.button(btn_pendente_label, key=f"pend_{sheet_row}", use_container_width=True):
                 try:
-                    atualizar_status(sheet_row, "A Pagar")
-                    st.success(f"Status da linha {sheet_row} atualizado para A Pagar.")
+                    atualizar_status(sheet_row, status_pendente_gravar)
+                    st.success(f"Status da linha {sheet_row} atualizado para {status_pendente_gravar}.")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Erro ao atualizar para A Pagar: {e}")
-
-        with b3:
-            if st.button("A Receber", key=f"areceber_{sheet_row}", use_container_width=True):
-                try:
-                    atualizar_status(sheet_row, "A Receber")
-                    st.success(f"Status da linha {sheet_row} atualizado para A Receber.")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Erro ao atualizar para A Receber: {e}")
+                    st.error(f"Erro ao atualizar para {status_pendente_gravar}: {e}")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
