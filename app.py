@@ -404,6 +404,15 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
+    .create-card {
+        background: #ffffff;
+        border: 1px solid #ececf3;
+        border-radius: 24px;
+        padding: 1.2rem;
+        box-shadow: 0 6px 18px rgba(20, 20, 43, 0.05);
+        margin-bottom: 1rem;
+    }
+
     .item-title {
         font-size: 1.25rem;
         font-weight: 800;
@@ -771,6 +780,12 @@ def carregar():
         "status_col_name": col_status,
         "valor_col_name": col_valor,
         "mes_col_name": col_mes,
+        "estab_col_name": col_estabelecimento,
+        "entrada_col_name": col_entrada,
+        "categoria_col_name": col_categoria,
+        "detalhes_col_name": col_detalhes,
+        "whatsapp_col_name": col_whatsapp,
+        "headers": headers,
     }
     return df, meta
 
@@ -818,6 +833,32 @@ def atualizar_valor(sheet_row, novo_valor):
 
     valor_col_idx = headers.index(valor_col_name) + 1
     ws.update_cell(sheet_row, valor_col_idx, formatar_valor_planilha(valor_num))
+    st.cache_data.clear()
+
+def adicionar_lancamento(meta, data_str, estabelecimento, valor, tipo, categoria, status, detalhes, whatsapp):
+    client = conectar()
+    ws = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
+
+    headers = meta["headers"]
+    nova_linha = [""] * len(headers)
+
+    mapa_valores = {
+        meta.get("mes_col_name"): data_str,
+        meta.get("estab_col_name"): estabelecimento,
+        meta.get("valor_col_name"): formatar_valor_planilha(parse_brl(valor)),
+        meta.get("entrada_col_name"): tipo,
+        meta.get("categoria_col_name"): categoria,
+        meta.get("status_col_name"): status,
+        meta.get("detalhes_col_name"): detalhes,
+        meta.get("whatsapp_col_name"): whatsapp,
+    }
+
+    for col_name, valor_coluna in mapa_valores.items():
+        if col_name and col_name in headers:
+            idx = headers.index(col_name)
+            nova_linha[idx] = valor_coluna
+
+    ws.append_row(nova_linha, value_input_option="USER_ENTERED")
     st.cache_data.clear()
 
 # =========================================================
@@ -901,7 +942,7 @@ with f3:
 
 with f4:
     st.markdown('<div class="filter-label">Entrada</div>', unsafe_allow_html=True)
-    filtro_entrada = st.selectbox("Entrada", ["Todas"] + entrada_opcoes, label_visibility="collapsed")
+    filtro_entrada = st.selectbox("Entrada", entrada_opcoes, label_visibility="collapsed")
 
 df_filtrado = df.copy()
 
@@ -1491,6 +1532,88 @@ with nv2:
         """,
         unsafe_allow_html=True
     )
+
+# =========================================================
+# NOVO LANÇAMENTO
+# =========================================================
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">➕ Adicionar novo lançamento</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="section-text">Cadastre uma nova receita ou despesa e envie direto para a planilha.</div>',
+    unsafe_allow_html=True
+)
+
+with st.container():
+    st.markdown('<div class="create-card">', unsafe_allow_html=True)
+
+    with st.form("form_novo_lancamento", clear_on_submit=True):
+        nl1, nl2, nl3, nl4 = st.columns(4)
+
+        with nl1:
+            nova_data = st.date_input("Data", value=hoje, format="DD/MM/YYYY")
+
+        with nl2:
+            novo_estabelecimento = st.text_input("Estabelecimento")
+
+        with nl3:
+            novo_valor = st.text_input("Valor", placeholder="Ex.: 1574,00")
+
+        with nl4:
+            novo_tipo = st.selectbox("Tipo", ["Receita", "Despesa"])
+
+        nl5, nl6, nl7 = st.columns(3)
+
+        with nl5:
+            nova_categoria = st.text_input("Categoria")
+
+        with nl6:
+            if novo_tipo == "Receita":
+                novo_status = st.selectbox("Status", ["Recebido", "A Receber"])
+            else:
+                novo_status = st.selectbox("Status", ["Pago", "A Pagar"])
+
+        with nl7:
+            novo_whatsapp = st.text_input("Whatsapp")
+
+        novo_detalhes = st.text_area("Detalhes", height=90)
+
+        salvar_novo = st.form_submit_button("Salvar lançamento", use_container_width=True)
+
+        if salvar_novo:
+            try:
+                if not str(novo_estabelecimento).strip():
+                    raise ValueError("Preencha o estabelecimento.")
+
+                if not str(novo_valor).strip():
+                    raise ValueError("Preencha o valor.")
+
+                if parse_brl(novo_valor) <= 0:
+                    raise ValueError("Digite um valor maior que zero.")
+
+                if not str(nova_categoria).strip():
+                    raise ValueError("Preencha a categoria.")
+
+                data_formatada = pd.to_datetime(nova_data).strftime("%d/%m/%Y")
+
+                adicionar_lancamento(
+                    meta=meta,
+                    data_str=data_formatada,
+                    estabelecimento=str(novo_estabelecimento).strip(),
+                    valor=novo_valor,
+                    tipo=novo_tipo,
+                    categoria=str(nova_categoria).strip(),
+                    status=novo_status,
+                    detalhes=str(novo_detalhes).strip(),
+                    whatsapp=str(novo_whatsapp).strip(),
+                )
+
+                st.success("Novo lançamento adicionado com sucesso.")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Erro ao adicionar lançamento: {e}")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
 # GRÁFICOS
