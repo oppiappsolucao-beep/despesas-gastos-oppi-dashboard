@@ -52,6 +52,15 @@ GOOGLE_CREDS = {
     "universe_domain": "googleapis.com"
 }
 
+@st.cache_resource(show_spinner=False)
+def conectar():
+    creds = Credentials.from_service_account_info(
+        GOOGLE_CREDS,
+        scopes=SCOPES
+    )
+    client = gspread.authorize(creds)
+    return client
+
 # =========================================================
 # ESTILO
 # =========================================================
