@@ -2,6 +2,8 @@ import base64
 import html
 import mimetypes
 import re
+import os
+import json
 from pathlib import Path
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -714,8 +716,14 @@ def opcoes_status_por_tipo(tipo):
 # =========================================================
 @st.cache_resource(show_spinner=False)
 def conectar():
+    creds_raw = os.environ.get("GOOGLE_CREDENTIALS")
+    if not creds_raw:
+        raise ValueError("A variável de ambiente GOOGLE_CREDENTIALS não foi encontrada no EasyPanel.")
+
+    creds_dict = json.loads(creds_raw)
+
     creds = Credentials.from_service_account_info(
-        st.secrets["google"],
+        creds_dict,
         scopes=SCOPES
     )
     client = gspread.authorize(creds)
