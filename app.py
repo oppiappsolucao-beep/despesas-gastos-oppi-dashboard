@@ -2,8 +2,6 @@ import base64
 import html
 import mimetypes
 import re
-import os
-import json
 from pathlib import Path
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -39,6 +37,20 @@ SCOPES = [
 ]
 
 TZ = ZoneInfo("America/Sao_Paulo")
+
+GOOGLE_CREDS = {
+    "type": "service_account",
+    "project_id": "dashboard-despesas-gastos-oppi",
+    "private_key_id": "3974a0efe71f649841a6f316605c3bd5a50754ef",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDiEtHKfNBdk8Li\nETrtw0TUPbmT9JT8jGxKTX2+40+O5G/jC9xU1TokbWpenbqYTH//ZmWj1vu5DLQD\n0eaXD477uOU8UZZn2+ZLCVOGhQH/4bR0RM5n76y5uL5WLjJynf/dSiplfBzDuQXR\nHzmGyx/PSj+gvTQyW6D92LQ/tCKdOy+SrpWuihiFBSsjfaOSGS/yWaLnDECfX6DR\nDuKAZofmlPJge8fCa9sP/G0yYikC1rjB5NOwcGpMtVgG3rX6rFBJit/bg8kVblZD\nztE7dEDmMYc8pa56N2FlSXbyq6ve4BD3hsau2mdyKMP8XJpsdbdNo2s/sKgGR4A2\n+PKuMNg7AgMBAAECggEAFN5+rH3rHWHnhC22mxfPtPWU7QCPkRfeMAzvn7ByIEaC\njmecFkSv6+7uk8wxqAXf08UxesQv7O9fd4ubCRs8xfK8G15Ytdh9BzSil9dgmnnM\nyhlHIh19r1zlGfJRYkOnLySKipKNDgN4pjGHHCQiGP7Jct6KzZJ1ARnndPEwnmmz\nP2vswvQFn43dp6/h73As8ofQig/xi0hovH47KGqgUZdDOfC0NZMucE03VpGbZ1TN\n4bRwNh4JhORUEPg3H9pxHfzENAQKobCWFQzG6zLkPfnrPDsB3RWF7v6KPcPu+Olw\nI4BQbSJpEcQPsq4294KNgx8nsS32u7z//I74qrp+UQKBgQD0RFKB3qhEwO58Bj9s\nADsD7j3YNZ7pRiI4uKIKPnTOzJ7hyDeEIApq9nIfGU23O2GLor8xpIIsJTLkUn58\nthGvWoFosl95w7qZ0Ym6rxG8BKCPU2Arz83gjYltIHEJAAfFeaBwcfNdFvqeOjQz\noi1dp95Hvb3lzfoaRHUQ3j8JIwKBgQDs7sdZB0G/tZ8VUQXaGSvJnHie1YbzQ1KL\n7qlE4Rw4DjTtjIxYshJTCLRw7JmlbGuAnShG6v2ADQsh9JlLeByfehLTd+fqTFPI\nZQxLKhgVn1pL3gFevpSJkDENjrP/4upLMrp1dMhg5pZTTypAwHOwUJyTFExRmxHF\nPlRNMA/CCQKBgF7fAmSqhBRgEsBc9NkPpdw69g45lUTpFnWNUHJGG7wOQU9UIivQ\n/frZSS3G+CZIi/Rd+4BecqiOsht35uStGmVO86AkV2zFln4Toji9sleiPHIuYdXi\nWgXzMwMNbJmgR2RtfuDtgSYQvLojxQ6g2Jndjzmx+kV9ILx/BjDNARKdAoGBAONu\njaLTCXT55Vvz63cgpFyiO1LUSvcmD43NKWS55XmVgY7pVCsru9VCzNp88zvMqCDM\nOsZgebg6TQ5qGeBMysT2zC17sv3ACMia3sMkA/x1e5rJ32zP6gtmgv+tlPEzI43N\ngxiOYm5JydDsc/W2BxcfOj0gxeWrwdIhc5CoaufpAoGATl1DvcRsjSun6PELyZ68\nXfL0sAphLUyal6Gli2ez9C9uoe5fQ6+HRCO9o/uQnnkQtljrPajr6aGQ3wzJ7dc+\nPT8y3JPBO/VBg4BUPWrdU1h011TKqw/BBYXJKqepkQ2ftNihhYyVuY3U7IW+SXEQ\nnwynqWw9XKwws5EkPW1TdkE=\n-----END PRIVATE KEY-----\n",
+    "client_email": "streamlit-dashboard@dashboard-despesas-gastos-oppi.iam.gserviceaccount.com",
+    "client_id": "107995700087066475943",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/streamlit-dashboard%40dashboard-despesas-gastos-oppi.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+}
 
 # =========================================================
 # ESTILO
@@ -716,14 +728,8 @@ def opcoes_status_por_tipo(tipo):
 # =========================================================
 @st.cache_resource(show_spinner=False)
 def conectar():
-    creds_raw = os.environ.get("GOOGLE_CREDENTIALS")
-    if not creds_raw:
-        raise ValueError("A variável de ambiente GOOGLE_CREDENTIALS não foi encontrada no EasyPanel.")
-
-    creds_dict = json.loads(creds_raw)
-
     creds = Credentials.from_service_account_info(
-        creds_dict,
+        GOOGLE_CREDS,
         scopes=SCOPES
     )
     client = gspread.authorize(creds)
